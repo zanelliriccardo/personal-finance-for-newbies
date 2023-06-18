@@ -1,2 +1,1 @@
-# finance-for-newbies
-FFN (Finance For Newbies)
+# Personal Finance for Newbies (PFN)
