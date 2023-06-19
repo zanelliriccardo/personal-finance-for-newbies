@@ -8,6 +8,10 @@ packages = [{include = "personal_finance_for_newbies"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+pandas = "^2.0.2"
+yfinance = "^0.2.20"
+plotly = "^5.15.0"
+jupyter = "^1.0.0"
 
 
 [build-system]
