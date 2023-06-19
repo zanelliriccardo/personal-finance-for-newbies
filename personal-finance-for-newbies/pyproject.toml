@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "personal-finance-for-newbies"
+version = "0.1.0"
+description = ""
+authors = ["Vincenzo <vincenzo.ventriglia@outlook.com>"]
+readme = "README.md"
+packages = [{include = "personal_finance_for_newbies"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
