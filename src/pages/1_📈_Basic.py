@@ -1,12 +1,12 @@
 import streamlit as st
 
-from var import GLOBAL_STREAMLIT_STYLE, FAVICON
+from var import GLOBAL_STREAMLIT_STYLE  # , FAVICON
 from utils import aggregate_by_ticker, get_last_closing_price
 from plot import plot_sunburst
 
 st.set_page_config(
     page_title="PFN | Basic",
-    page_icon=FAVICON,
+    # page_icon=FAVICON,
     layout="wide",
     initial_sidebar_state="auto",
 )

@@ -1,14 +1,17 @@
 from pathlib import Path
 
 import streamlit as st
-import pandas as pd
 
 from utils import load_data
-from var import GLOBAL_STREAMLIT_STYLE, DATA_PATH, FAVICON
+from var import (
+    GLOBAL_STREAMLIT_STYLE,
+    DATA_PATH,
+    # FAVICON,
+)
 
 st.set_page_config(
     page_title="PFN",
-    page_icon=FAVICON,
+    # page_icon=FAVICON,
     layout="wide",
     initial_sidebar_state="auto",
 )
