@@ -5,6 +5,7 @@ GLOBAL_STREAMLIT_STYLE = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
+            .css-15zrgzn {display: none}
             </style>
             """
 
