@@ -1,11 +1,15 @@
 from pathlib import Path
 from typing import Tuple, Dict, List
 
+import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
 
+from var import CACHE_EXPIRE_SECONDS
 
+
+@st.cache_data(show_spinner=False)
 def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
     df_storico = pd.read_excel(
         full_path,
@@ -42,6 +46,7 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
     return df_storico, df_anagrafica
 
 
+@st.cache_data(show_spinner=False)
 def aggregate_by_ticker(df: pd.DataFrame, in_pf_only: bool = False) -> pd.DataFrame:
     df["ap_amount"] = df["shares"] * df["price"]
     df["ticker_yf"] = df["ticker"] + "." + df["exchange"]
@@ -74,6 +79,7 @@ def aggregate_by_ticker(df: pd.DataFrame, in_pf_only: bool = False) -> pd.DataFr
     return df_portfolio.drop(columns="is_in_pf").reset_index(drop=True)
 
 
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
     df_last_closing = pd.DataFrame(
         columns=["ticker_yf", "last_closing_date", "price"],
@@ -100,6 +106,7 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
     return df_last_closing
 
 
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_full_price_history(ticker_list: List[str]) -> Dict:
     df_history = dict()
 

@@ -11,3 +11,5 @@ GLOBAL_STREAMLIT_STYLE = """
 DATA_PATH = Path("..", "data", "in")
 
 FAVICON = Image.open(Path("..", "images", "favicon.ico"))
+
+CACHE_EXPIRE_SECONDS = 600
