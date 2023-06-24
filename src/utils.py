@@ -85,23 +85,26 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
         columns=["ticker_yf", "last_closing_date", "price"],
         index=range(len(ticker_list)),
     )
+    try:
+        for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
+            ticker_data = yf.Ticker(ticker_)
+            closing_date_ = (
+                ticker_data.history(
+                    period="1d",
+                    interval="1d",
+                )["Close"]
+                .reset_index()
+                .values.tolist()
+            )
 
-    for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
-        ticker_data = yf.Ticker(ticker_)
-        closing_date_ = (
-            ticker_data.history(
-                period="1d",
-                interval="1d",
-            )["Close"]
-            .reset_index()
-            .values.tolist()
+            df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
+
+        df_last_closing["last_closing_date"] = (
+            df_last_closing["last_closing_date"].astype(str).str.slice(0, 10)
         )
-
-        df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
-
-    df_last_closing["last_closing_date"] = (
-        df_last_closing["last_closing_date"].astype(str).str.slice(0, 10)
-    )
+    except:
+        st.error('Data not available. Please check your internet connection or try again later', icon='😔')
+        st.stop()
 
     return df_last_closing
 
@@ -122,3 +125,12 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
         df_history[ticker_].index = pd.to_datetime(df_history[ticker_].index.date)
 
     return df_history
+
+@st.cache_data(ttl=10*CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_risk_free_rate() -> float:
+    try:
+        df_ecb = pd.read_html(io='http://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_short-term_rate/html/index.en.html')[0]
+        risk_free_rate = df_ecb.iloc[0,1].astype(float)
+    except:
+        risk_free_rate = 3
+    return risk_free_rate
