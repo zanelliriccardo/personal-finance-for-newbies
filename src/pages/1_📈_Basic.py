@@ -1,7 +1,7 @@
 import streamlit as st
 
-from var import GLOBAL_STREAMLIT_STYLE, FAVICON
-from utils import aggregate_by_ticker, get_last_closing_price
+from var import GLOBAL_STREAMLIT_STYLE, PLT_CONFIG_NO_LOGO, FAVICON
+from utils import aggregate_by_ticker, get_last_closing_price, get_full_price_history, get_risk_free_rate
 from plot import plot_sunburst
 
 st.set_page_config(
@@ -18,7 +18,7 @@ if "data" in st.session_state:
     df_anagrafica = st.session_state["dimensions"]
 else:
     st.error(
-        "Ops... non c'è niente da visualizzare. Passa prima per la 🏠 per caricare i dati"
+        "Oops... there's nothing to display. Go through 🏠 first to load the data"
     )
     st.stop()
 
@@ -76,4 +76,40 @@ df_pivot["weight_pf"] = (
 
 st.markdown("## Portfolio asset allocation")
 fig = plot_sunburst(df=df_pivot)
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+#####################
+
+import pandas as pd
+import numpy as np
+df_full_history = get_full_price_history(ticker_list)
+df_full_history_concat = pd.concat(
+    [df_full_history[t_] for t_ in ticker_list],
+    axis=1,
+)
+first_idx = df_full_history_concat.apply(
+    pd.Series.first_valid_index
+).max()
+df = df_full_history_concat.loc[first_idx:]
+
+TRADING_DAYS = 252
+returns = np.log(df['LCWD.MI'].div(df['LCWD.MI'].shift(1))).fillna(0)
+
+@st.cache_data()
+def sharpe_ratio(returns, trading_days, risk_free_rate):
+    mean = returns.mean() * trading_days - risk_free_rate
+    std = returns.std() * np.sqrt(trading_days)
+    return mean / std
+
+st.write(sharpe_ratio(returns, trading_days=TRADING_DAYS, risk_free_rate=get_risk_free_rate()/100))
+
+# def sortino_ratio(series, N,rf):
+#     mean = series.mean() * N -rf
+#     std_neg = series[series<0].std()*np.sqrt(N)
+#     return mean/std_neg
+
+# def max_drawdown(return_series):
+#     comp_ret = (return_series+1).cumprod()
+#     peak = comp_ret.expanding(min_periods=1).max()
+#     dd = (comp_ret/peak)-1
+#     return dd.min()
