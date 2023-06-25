@@ -27,6 +27,8 @@ To run the docker image using the host's network (which will make the app access
 
 - `docker run --network host personal-finance-for-newbies`
 
+## How can I help?
+
 ### To-Do list
 We always look for pull requests, if you know better!
 Here's an hopefully up-to-date list of things to build:
