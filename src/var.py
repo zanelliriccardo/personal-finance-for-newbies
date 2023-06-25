@@ -8,6 +8,13 @@ assets_path = str(
     os.path.join(*split_script_running_path[0 : len(split_script_running_path) - 1])
 )
 
+# Data/images
+
+DATA_PATH = Path(assets_path, "data", "in")
+FAVICON = Image.open(Path(assets_path, "images", "favicon.ico"))
+
+# Streamlit/Plotly vars
+
 GLOBAL_STREAMLIT_STYLE = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -16,8 +23,22 @@ GLOBAL_STREAMLIT_STYLE = """
             </style>
             """
 
-DATA_PATH = Path(assets_path, "data", "in")
+PLT_CONFIG = {
+    "displaylogo": False,
+    "modeBarButtonsToAdd": [
+        "drawline",
+        "drawopenpath",
+        "drawcircle",
+        "drawrect",
+        "eraseshape",
+    ],
+    "scrollZoom": False,
+}
+
+PLT_CONFIG_NO_LOGO = {"displaylogo": False}
 
 CACHE_EXPIRE_SECONDS = 600
 
-FAVICON = Image.open(Path(assets_path, "images", "favicon.ico"))
+# Others
+
+TRADING_DAYS_YEAR = 252

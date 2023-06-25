@@ -1,11 +1,26 @@
 import streamlit as st
+import numpy as np
+import pandas as pd
 
-from var import GLOBAL_STREAMLIT_STYLE, FAVICON
-from utils import aggregate_by_ticker, get_last_closing_price
-from plot import plot_sunburst
+from var import (
+    GLOBAL_STREAMLIT_STYLE,
+    PLT_CONFIG,
+    PLT_CONFIG_NO_LOGO,
+    FAVICON,
+)
+from utils import (
+    aggregate_by_ticker,
+    get_last_closing_price,
+    get_max_common_history,
+    sharpe_ratio,
+    get_risk_free_rate_last_value,
+    get_risk_free_rate_history,
+    get_wealth_history,
+)
+from plot import plot_sunburst, plot_wealth
 
 st.set_page_config(
-    page_title="PFN | Basic",
+    page_title="PFN | Basic Stats",
     page_icon=FAVICON,
     layout="wide",
     initial_sidebar_state="auto",
@@ -17,9 +32,7 @@ if "data" in st.session_state:
     df_storico = st.session_state["data"]
     df_anagrafica = st.session_state["dimensions"]
 else:
-    st.error(
-        "Ops... non c'è niente da visualizzare. Passa prima per la 🏠 per caricare i dati"
-    )
+    st.error("Oops... there's nothing to display. Go through 🏠 first to load the data")
     st.stop()
 
 df_pf = aggregate_by_ticker(df_storico, in_pf_only=True)
@@ -55,15 +68,14 @@ col_l.metric(
     delta=f"{pnl: .1f} € ({sign}{pnl_perc: .1f}%)",
 )
 
-df_j["ticker"] = df_j["ticker_yf"].str.split(".").str[0]
 df_j["position_value"] = df_j["shares"] * df_j["price"]
 df_pivot = (
-    df_j.merge(df_anagrafica, how="left", on="ticker")
+    df_j.merge(df_anagrafica, how="left", on="ticker_yf")
     .groupby(
         [
             "macro_asset_class",
             "asset_class",
-            "ticker",
+            "ticker_yf",
             "name",
         ]
     )["position_value"]
@@ -74,6 +86,16 @@ df_pivot["weight_pf"] = (
     (100 * df_pivot["position_value"].div(pf_actual_value)).astype(float).round(1)
 )
 
-st.markdown("## Portfolio asset allocation")
+st.markdown("## Current Portfolio Asset Allocation")
 fig = plot_sunburst(df=df_pivot)
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+st.markdown("## Daily value of the Accumulation Plan")
+
+df_wealth = get_wealth_history(
+    df_transactions=df_storico,
+    df_prices=get_max_common_history(ticker_list=ticker_list),
+)
+
+fig = plot_wealth(df=df_wealth)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
