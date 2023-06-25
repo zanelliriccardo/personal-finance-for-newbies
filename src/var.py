@@ -38,3 +38,7 @@ PLT_CONFIG = {
 PLT_CONFIG_NO_LOGO = {"displaylogo": False}
 
 CACHE_EXPIRE_SECONDS = 600
+
+# Others
+
+TRADING_DAYS_YEAR = 252

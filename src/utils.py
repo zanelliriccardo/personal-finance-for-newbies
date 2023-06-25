@@ -1,4 +1,5 @@
 from pathlib import Path
+import datetime
 from typing import Tuple, Dict, List
 
 import streamlit as st
@@ -31,25 +32,28 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
             "Commissioni (€)": "fees",
         }
     )
+    df_storico["ap_amount"] = df_storico["shares"] * df_storico["price"]
+    df_storico["ticker_yf"] = df_storico["ticker"] + "." + df_storico["exchange"]
 
     df_anagrafica = pd.read_excel(
         full_path, sheet_name="Anagrafica Titoli", dtype=str
     ).rename(
         columns={
+            "Borsa": "exchange",
             "Ticker": "ticker",
             "Nome ETF": "name",
             "Tipologia": "asset_class",
             "Macro Tipologia": "macro_asset_class",
         }
     )
-
+    df_anagrafica["ticker_yf"] = (
+        df_anagrafica["ticker"] + "." + df_anagrafica["exchange"]
+    )
     return df_storico, df_anagrafica
 
 
 @st.cache_data(show_spinner=False)
 def aggregate_by_ticker(df: pd.DataFrame, in_pf_only: bool = False) -> pd.DataFrame:
-    df["ap_amount"] = df["shares"] * df["price"]
-    df["ticker_yf"] = df["ticker"] + "." + df["exchange"]
 
     df_portfolio = (
         df.groupby("ticker_yf")
@@ -103,7 +107,10 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
             df_last_closing["last_closing_date"].astype(str).str.slice(0, 10)
         )
     except:
-        st.error('Data not available. Please check your internet connection or try again later', icon='😔')
+        st.error(
+            "Data not available. Please check your internet connection or try again later",
+            icon="😔",
+        )
         st.stop()
 
     return df_last_closing
@@ -115,10 +122,7 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
 
     for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
         ticker_data = yf.Ticker(ticker_)
-        df_history[ticker_] = ticker_data.history(
-            period="max",
-            interval="1d",
-        )[
+        df_history[ticker_] = ticker_data.history(period="max", interval="1d",)[
             "Close"
         ].rename(ticker_)
 
@@ -126,11 +130,102 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
 
     return df_history
 
-@st.cache_data(ttl=10*CACHE_EXPIRE_SECONDS, show_spinner=False)
-def get_risk_free_rate() -> float:
+
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_max_common_history(ticker_list: List[str]) -> pd.DataFrame:
+    full_history = get_full_price_history(ticker_list)
+    df_full_history = pd.concat(
+        [full_history[t_] for t_ in ticker_list],
+        axis=1,
+    )
+    first_idx = df_full_history.apply(pd.Series.first_valid_index).max()
+    return df_full_history.loc[first_idx:]
+
+
+@st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_risk_free_rate_last_value(decimal: bool = False) -> float:
     try:
-        df_ecb = pd.read_html(io='http://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_short-term_rate/html/index.en.html')[0]
-        risk_free_rate = df_ecb.iloc[0,1].astype(float)
+        df_ecb = pd.read_html(
+            io="http://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_short-term_rate/html/index.en.html"
+        )[0]
+        risk_free_rate = df_ecb.iloc[0, 1].astype(float)
     except:
         risk_free_rate = 3
+    if decimal:
+        risk_free_rate = risk_free_rate / 100
     return risk_free_rate
+
+
+@st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_risk_free_rate_history(decimal: bool = False) -> pd.DataFrame:
+    euro_str_link = "https://sdw.ecb.europa.eu/quickviewexport.do?SERIES_KEY=438.EST.B.EU000A2X2A25.WT&type=csv"
+    try:
+        df_ecb = (
+            pd.read_csv(
+                euro_str_link,
+                sep=",",
+                skiprows=5,
+                index_col=0,
+            )
+            .drop(columns="obs. status")
+            .rename(columns={"Unnamed: 1": "euro_str"})
+        ).sort_index()
+    except:
+        df_ecb = pd.DataFrame()
+    if decimal:
+        df_ecb["euro_str"] = df_ecb["euro_str"].div(100)
+    return df_ecb
+
+
+@st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
+def sharpe_ratio(
+    returns: pd.Series, trading_days: int, risk_free_rate: float = 3
+) -> float:
+    mean = returns.mean() * trading_days - risk_free_rate
+    std = returns.std() * np.sqrt(trading_days)
+    return mean / std
+
+
+# def sortino_ratio(series, N, rf):
+#     mean = series.mean() * N -rf
+#     std_neg = series[series<0].std()*np.sqrt(N)
+#     return mean/std_neg
+
+# def max_drawdown(return_series):
+#     comp_ret = (return_series+1).cumprod()
+#     peak = comp_ret.expanding(min_periods=1).max()
+#     dd = (comp_ret/peak)-1
+#     return dd.min()
+
+
+@st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_wealth_history(
+    df_transactions: pd.DataFrame, df_prices: pd.DataFrame
+) -> pd.Series:
+    ticker_list = df_prices.columns.to_list()
+    df_transactions = df_transactions[df_transactions["ticker_yf"].isin(ticker_list)]
+
+    begin_date = df_transactions["transaction_date"].min()
+    today = datetime.datetime.now().date()
+    date_range = pd.date_range(start=begin_date, end=today, freq="D")
+
+    df_asset_allocation = pd.DataFrame(
+        index=date_range,
+        columns=ticker_list,
+        data=0,
+    )
+
+    for (data, ticker), group in df_transactions.groupby(
+        ["transaction_date", "ticker_yf"]
+    ):
+        total_shares = group["shares"].sum()
+        df_asset_allocation.loc[data, ticker] += total_shares
+    df_asset_allocation = df_asset_allocation.cumsum()
+
+    df_wealth = (
+        df_asset_allocation.multiply(df_prices.loc[begin_date:])
+        .fillna(method="ffill")
+        .sum(axis=1)
+        .rename("ap_daily_value")
+    )
+    return df_wealth
