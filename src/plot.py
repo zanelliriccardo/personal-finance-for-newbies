@@ -1,3 +1,5 @@
+from typing import Literal
+
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -22,12 +24,15 @@ def plot_sunburst(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def plot_pnl_by_asset_class(df_pnl: pd.DataFrame) -> go.Figure:
-    df_pnl["color"] = np.where(df_pnl["pnl"].ge(0), "green", "red")
+def plot_pnl_by_asset_class(
+    df_pnl: pd.DataFrame,
+    group_by: Literal["asset_class", "macro_asset_class"],
+) -> go.Figure:
+    df_pnl["color"] = np.where(df_pnl["pnl"].ge(0), "green", "firebrick")
     fig = go.Figure()
     fig.add_trace(
         go.Bar(
-            x=df_pnl["asset_class"],
+            x=df_pnl[group_by],
             y=df_pnl["pnl"],
             marker_color=df_pnl["color"],
             text=df_pnl["pnl"],

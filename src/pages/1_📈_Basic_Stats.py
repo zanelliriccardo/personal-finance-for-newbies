@@ -78,7 +78,7 @@ st.markdown("## Current Portfolio Asset Allocation")
 fig = plot_sunburst(df=df_pivot)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
-with st.expander("Show me a table"):
+with st.expander("Show pivot table"):
     st.dataframe(
         df_pivot.rename(
             columns={
@@ -96,11 +96,24 @@ st.markdown("***")
 
 st.markdown("## Profit and Loss by asset class")
 
-df_pnl_by_asset_class = get_pnl_by_asset_class(
-    df=df_j, df_dimensions=df_anagrafica, group_by="asset_class"
+group_by = st.radio(
+    label="Evaluate PnL with respect to:",
+    options=["Macro Asset Classes", "Asset Classes"],
+    horizontal=True,
 )
 
-fig = plot_pnl_by_asset_class(df_pnl=df_pnl_by_asset_class)
+dict_group_by = {
+    "Macro Asset Classes": "macro_asset_class",
+    "Asset Classes": "asset_class",
+}
+
+df_pnl_by_asset_class = get_pnl_by_asset_class(
+    df=df_j, df_dimensions=df_anagrafica, group_by=dict_group_by[group_by]
+)
+
+fig = plot_pnl_by_asset_class(
+    df_pnl=df_pnl_by_asset_class, group_by=dict_group_by[group_by]
+)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 
 st.markdown("***")
