@@ -12,12 +12,11 @@ from utils import (
     aggregate_by_ticker,
     get_last_closing_price,
     get_max_common_history,
-    sharpe_ratio,
-    get_risk_free_rate_last_value,
-    get_risk_free_rate_history,
     get_wealth_history,
+    get_portfolio_pivot,
+    get_pnl_by_asset_class,
 )
-from plot import plot_sunburst, plot_wealth
+from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class
 
 st.set_page_config(
     page_title="PFN | Basic Stats",
@@ -69,26 +68,42 @@ col_l.metric(
 )
 
 df_j["position_value"] = df_j["shares"] * df_j["price"]
-df_pivot = (
-    df_j.merge(df_anagrafica, how="left", on="ticker_yf")
-    .groupby(
-        [
-            "macro_asset_class",
-            "asset_class",
-            "ticker_yf",
-            "name",
-        ]
-    )["position_value"]
-    .sum()
-    .reset_index()
+df_pivot = get_portfolio_pivot(
+    df=df_j, df_dimensions=df_anagrafica, pf_actual_value=pf_actual_value
 )
-df_pivot["weight_pf"] = (
-    (100 * df_pivot["position_value"].div(pf_actual_value)).astype(float).round(1)
-)
+
+st.markdown("***")
 
 st.markdown("## Current Portfolio Asset Allocation")
 fig = plot_sunburst(df=df_pivot)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+with st.expander("Show me a table"):
+    st.dataframe(
+        df_pivot.rename(
+            columns={
+                "macro_asset_class": "Macro Asset Class",
+                "asset_class": "Asset Class",
+                "ticker_yf": "Ticker",
+                "name": "Name",
+                "position_value": "Position Value (€)",
+                "weight_pf": "Weight (%)",
+            }
+        )
+    )
+
+st.markdown("***")
+
+st.markdown("## Profit and Loss by asset class")
+
+df_pnl_by_asset_class = get_pnl_by_asset_class(
+    df=df_j, df_dimensions=df_anagrafica, group_by="asset_class"
+)
+
+fig = plot_pnl_by_asset_class(df_pnl=df_pnl_by_asset_class)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+st.markdown("***")
 
 st.markdown("## Daily value of the Accumulation Plan")
 

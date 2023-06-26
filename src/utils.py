@@ -1,6 +1,6 @@
 from pathlib import Path
 import datetime
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Literal
 
 import streamlit as st
 import yfinance as yf
@@ -229,3 +229,42 @@ def get_wealth_history(
         .rename("ap_daily_value")
     )
     return df_wealth
+
+
+@st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_portfolio_pivot(
+    df: pd.DataFrame, df_dimensions: pd.DataFrame, pf_actual_value: float
+) -> pd.DataFrame:
+    df_pivot = (
+        df.copy()
+        .merge(df_dimensions, how="left", on="ticker_yf")
+        .groupby(
+            [
+                "macro_asset_class",
+                "asset_class",
+                "ticker_yf",
+                "name",
+            ]
+        )["position_value"]
+        .sum()
+        .reset_index()
+    )
+    df_pivot["weight_pf"] = (
+        (100 * df_pivot["position_value"].div(pf_actual_value)).astype(float).round(1)
+    )
+    df_pivot["position_value"] = df_pivot["position_value"].astype(float).round(1)
+    return df_pivot
+
+
+@st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_pnl_by_asset_class(
+    df: pd.DataFrame,
+    df_dimensions: pd.DataFrame,
+    group_by: Literal["asset_class", "macro_asset_class"],
+) -> pd.DataFrame:
+    df_pnl = df.merge(df_dimensions, how="left", on="ticker_yf")
+    df_pnl["pnl"] = np.round(
+        ((df_pnl["price"] - df_pnl["dca"]) * df_pnl["shares"]).astype(float), 1
+    )
+    df_pnl = df_pnl.groupby(group_by)["pnl"].sum().reset_index().sort_values([group_by])
+    return df_pnl
