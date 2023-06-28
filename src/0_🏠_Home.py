@@ -18,7 +18,14 @@ st.set_page_config(
 
 st.markdown(GLOBAL_STREAMLIT_STYLE, unsafe_allow_html=True)
 
-st.title("Personal Finance for Newbies")
+st.title("Welcome to Personal Finance for Newbies!")
+
+st.markdown(
+    "PFN is a web app that – from buy/sell financial asset transactions – provides easy-to-use, \
+    near-real-time statistics (*i.e.*, updated to the last closing) on your investment portfolio."
+)
+st.markdown("***")
+st.markdown("## Let's get started")
 
 st.button(label="Load Mock Data", key="load_mock_df")
 
