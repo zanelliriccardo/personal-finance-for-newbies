@@ -33,7 +33,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 col_ll, col_l, col_c, col_r, col_rr = st.columns([0.6, 1, 0.6, 1, 0.6], gap="small")
-with open("../data/in/template.xlsx", "rb") as f:
+with open(DATA_PATH / Path("demo.xlsx"), "rb") as f:
     col_l.download_button(
         "Download Template",
         data=f,
