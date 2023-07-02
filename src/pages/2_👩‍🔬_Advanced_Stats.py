@@ -1,18 +1,17 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
 
 from var import (
     GLOBAL_STREAMLIT_STYLE,
-    PLT_CONFIG,
-    PLT_CONFIG_NO_LOGO,
+    # PLT_CONFIG,
+    # PLT_CONFIG_NO_LOGO,
     FAVICON,
 )
-from utils import (
-    sharpe_ratio,
-    get_risk_free_rate_last_value,
-    get_risk_free_rate_history,
-)
+
+# from utils import (
+#     sharpe_ratio,
+#     get_risk_free_rate_last_value,
+#     get_risk_free_rate_history,
+# )
 
 st.set_page_config(
     page_title="PFN | Advanced Stats",
@@ -22,6 +21,7 @@ st.set_page_config(
 )
 
 st.markdown(GLOBAL_STREAMLIT_STYLE, unsafe_allow_html=True)
+st.warning("Work in progress! Please, come back later", icon="🚧")
 
 # df_common_history = get_max_common_history(ticker_list=ticker_list)
 
