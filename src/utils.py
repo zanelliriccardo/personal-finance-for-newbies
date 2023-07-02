@@ -54,7 +54,6 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
 @st.cache_data(show_spinner=False)
 def aggregate_by_ticker(df: pd.DataFrame, in_pf_only: bool = False) -> pd.DataFrame:
-
     df_portfolio = (
         df.groupby("ticker_yf")
         .agg(
@@ -122,7 +121,10 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
 
     for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
         ticker_data = yf.Ticker(ticker_)
-        df_history[ticker_] = ticker_data.history(period="max", interval="1d",)[
+        df_history[ticker_] = ticker_data.history(
+            period="max",
+            interval="1d",
+        )[
             "Close"
         ].rename(ticker_)
 
@@ -233,19 +235,29 @@ def get_wealth_history(
 
 @st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_portfolio_pivot(
-    df: pd.DataFrame, df_dimensions: pd.DataFrame, pf_actual_value: float
+    df: pd.DataFrame,
+    df_dimensions: pd.DataFrame,
+    pf_actual_value: float,
+    aggregation_level: Literal["ticker", "asset_class", "macro_asset_class"],
 ) -> pd.DataFrame:
+    if aggregation_level == "ticker":
+        groupby_keys = [
+            "macro_asset_class",
+            "asset_class",
+            "ticker_yf",
+            "name",
+        ]
+    elif aggregation_level == "asset_class":
+        groupby_keys = [
+            "macro_asset_class",
+            "asset_class",
+        ]
+    elif aggregation_level == "macro_asset_class":
+        groupby_keys = "macro_asset_class"
     df_pivot = (
         df.copy()
         .merge(df_dimensions, how="left", on="ticker_yf")
-        .groupby(
-            [
-                "macro_asset_class",
-                "asset_class",
-                "ticker_yf",
-                "name",
-            ]
-        )["position_value"]
+        .groupby(groupby_keys)["position_value"]
         .sum()
         .reset_index()
     )

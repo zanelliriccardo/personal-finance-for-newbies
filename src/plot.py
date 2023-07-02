@@ -28,6 +28,7 @@ def plot_pnl_by_asset_class(
     df_pnl: pd.DataFrame,
     group_by: Literal["asset_class", "macro_asset_class"],
 ) -> go.Figure:
+    df_pnl = df_pnl.sort_values("pnl", ascending=False)
     df_pnl["color"] = np.where(df_pnl["pnl"].ge(0), "green", "firebrick")
     fig = go.Figure()
     fig.add_trace(

@@ -153,4 +153,5 @@ dmypy.json
 cython_debug/
 
 *.xlsx
-!pac.xlsx
+!demo.xlsx
+!template.xlsx

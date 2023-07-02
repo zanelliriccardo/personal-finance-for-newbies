@@ -69,7 +69,10 @@ col_l.metric(
 
 df_j["position_value"] = df_j["shares"] * df_j["price"]
 df_pivot = get_portfolio_pivot(
-    df=df_j, df_dimensions=df_anagrafica, pf_actual_value=pf_actual_value
+    df=df_j,
+    df_dimensions=df_anagrafica,
+    pf_actual_value=pf_actual_value,
+    aggregation_level="ticker",
 )
 
 st.markdown("***")
@@ -79,8 +82,25 @@ fig = plot_sunburst(df=df_pivot)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
 with st.expander("Show pivot table"):
-    st.dataframe(
-        df_pivot.rename(
+    group_by = st.radio(
+        label="Aggregate by:",
+        options=["Macro Asset Classes", "Asset Classes", "Ticker"],
+        horizontal=True,
+    )
+    dict_group_by = {
+        "Macro Asset Classes": "macro_asset_class",
+        "Asset Classes": "asset_class",
+        "Ticker": "ticker",
+    }
+    df_pivot_ = get_portfolio_pivot(
+        df=df_j,
+        df_dimensions=df_anagrafica,
+        pf_actual_value=pf_actual_value,
+        aggregation_level=dict_group_by[group_by],
+    )
+    df_pivot_.index += 1
+    st.table(
+        df_pivot_.rename(
             columns={
                 "macro_asset_class": "Macro Asset Class",
                 "asset_class": "Asset Class",
@@ -89,7 +109,7 @@ with st.expander("Show pivot table"):
                 "position_value": "Position Value (€)",
                 "weight_pf": "Weight (%)",
             }
-        )
+        ).style.format(precision=1)
     )
 
 st.markdown("***")
