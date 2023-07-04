@@ -88,9 +88,9 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
         columns=["ticker_yf", "last_closing_date", "price"],
         index=range(len(ticker_list)),
     )
-    try:
-        for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
-            ticker_data = yf.Ticker(ticker_)
+    for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
+        ticker_data = yf.Ticker(ticker_)
+        try:
             closing_date_ = (
                 ticker_data.history(
                     period="1d",
@@ -99,18 +99,16 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
                 .reset_index()
                 .values.tolist()
             )
-
             df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
-
-        df_last_closing["last_closing_date"] = (
-            df_last_closing["last_closing_date"].astype(str).str.slice(0, 10)
-        )
-    except:
-        st.error(
-            "Data not available. Please check your internet connection or try again later",
+        except:
+            st.error(
+            f"{ticker_}: latest data not available. Please check your internet connection or try again later",
             icon="😔",
         )
-        st.stop()
+
+    df_last_closing["last_closing_date"] = (
+        df_last_closing["last_closing_date"].astype(str).str.slice(0, 10)
+    )
 
     return df_last_closing
 
