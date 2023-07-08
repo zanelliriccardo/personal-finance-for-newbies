@@ -1,5 +1,5 @@
 from pathlib import Path
-import datetime
+from datetime import datetime, timedelta
 from typing import Tuple, Dict, List, Literal
 
 import streamlit as st
@@ -95,22 +95,47 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
                 ticker_data.history(
                     period="1d",
                     interval="1d",
-                )["Close"]
+                )["Close "]
                 .reset_index()
                 .values.tolist()
             )
             df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
         except:
-            st.error(
-            f"{ticker_}: latest data not available. Please check your internet connection or try again later",
-            icon="😔",
-        )
+            try:
+                closing_date_ = get_last_closing_price_from_api(ticker=ticker_)
+                df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
+            except:
+                st.error(
+                    f"{ticker_}: latest data not available. Please check your internet connection or try again later",
+                    icon="😔",
+                )
 
     df_last_closing["last_closing_date"] = (
         df_last_closing["last_closing_date"].astype(str).str.slice(0, 10)
     )
 
     return df_last_closing
+
+
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_last_closing_price_from_api(ticker: str) -> List:
+    today = datetime.utcnow()
+    yesterday = today - timedelta(days=1)
+
+    period1 = int(yesterday.timestamp())
+    period2 = int(datetime.utcnow().timestamp())
+
+    link = f'https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval=1d&events=history&includeAdjustedClose=true'
+
+    try:
+        closing_date = pd.read_csv(link, usecols=['Date', 'Adj Close']).rename({'Adj Close': 'Close'})
+        closing_date['Date'] = pd.to_datetime(closing_date['Date'])
+        closing_date = closing_date.values.tolist()
+    except:
+        closing_date = None
+
+    return closing_date
+
 
 
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
@@ -206,7 +231,7 @@ def get_wealth_history(
     df_transactions = df_transactions[df_transactions["ticker_yf"].isin(ticker_list)]
 
     begin_date = df_transactions["transaction_date"].min()
-    today = datetime.datetime.now().date()
+    today = datetime.now().date()
     date_range = pd.date_range(start=begin_date, end=today, freq="D")
 
     df_asset_allocation = pd.DataFrame(
