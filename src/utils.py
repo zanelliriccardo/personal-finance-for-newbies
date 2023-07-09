@@ -49,7 +49,36 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
     df_anagrafica["ticker_yf"] = (
         df_anagrafica["ticker"] + "." + df_anagrafica["exchange"]
     )
+
+    write_load_message(df_data=df_storico, df_dimensions=df_anagrafica)
     return df_storico, df_anagrafica
+
+
+def write_load_message(df_data: pd.DataFrame, df_dimensions: pd.DataFrame) -> None:
+    n_transactions = df_data.shape[0]
+    n_tickers = df_data["ticker"].nunique()
+    min_date, max_date = (
+        str(df_data["transaction_date"].min())[:10],
+        str(df_data["transaction_date"].max())[:10],
+    )
+    set_data_tickers = sorted(df_data["ticker"].unique())
+    set_dimensions_tickers = sorted(df_dimensions["ticker"].unique())
+    n_data_na = df_data.isnull().sum().sum()
+    n_dimensions_na = df_dimensions.isnull().sum().sum()
+
+    if n_data_na > 0 or n_dimensions_na > 0:
+        st.error(
+            f"There are null values: {n_data_na} among transactions, {n_dimensions_na} among tickers' descriptions"
+        )
+
+    if set_data_tickers != set_dimensions_tickers:
+        st.warning(
+            "There is some inconsistency between the tickers traded and the tickers' descriptions"
+        )
+
+    st.success(
+        f"Successfully loaded **{n_transactions} transactions** relating to **{n_tickers} tickers** and spanning from {min_date} to {max_date}"
+    )
 
 
 @st.cache_data(show_spinner=False)
