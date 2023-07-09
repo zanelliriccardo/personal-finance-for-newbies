@@ -125,17 +125,18 @@ def get_last_closing_price_from_api(ticker: str) -> List:
     period1 = int(delayed.timestamp())
     period2 = int(datetime.utcnow().timestamp())
 
-    link = f'https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval=1d&events=history&includeAdjustedClose=true'
+    link = f"https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval=1d&events=history&includeAdjustedClose=true"
 
     try:
-        closing_date = pd.read_csv(link, usecols=['Date', 'Adj Close']).rename({'Adj Close': 'Close'})
-        closing_date['Date'] = pd.to_datetime(closing_date['Date'])
+        closing_date = pd.read_csv(link, usecols=["Date", "Adj Close"]).rename(
+            {"Adj Close": "Close"}
+        )
+        closing_date["Date"] = pd.to_datetime(closing_date["Date"])
         closing_date = closing_date.head(1).values.tolist()
     except:
         closing_date = None
 
     return closing_date
-
 
 
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
@@ -144,10 +145,7 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
 
     for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
         ticker_data = yf.Ticker(ticker_)
-        df_history[ticker_] = ticker_data.history(
-            period="max",
-            interval="1d",
-        )[
+        df_history[ticker_] = ticker_data.history(period="max", interval="1d",)[
             "Close"
         ].rename(ticker_)
 

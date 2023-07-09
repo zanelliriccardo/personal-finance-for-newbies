@@ -27,7 +27,7 @@ st.markdown(
 st.markdown("***")
 st.markdown("## Let's get started")
 st.markdown(
-    'You can **download** a template, **fill** it in with your accumulation plan\'s buy/sell transactions, and **upload** it:',
+    "You can **download** a template, **fill** it in with your accumulation plan's buy/sell transactions, and **upload** it:",
     unsafe_allow_html=True,
 )
 col_ll, col_l, col_c, col_r, col_rr = st.columns([0.6, 1, 0.6, 1, 0.6], gap="small")
@@ -38,14 +38,14 @@ with open(DATA_PATH / Path("demo.xlsx"), "rb") as f:
         file_name="template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-if col_r.button('Upload your Data'):
-    uploaded_file = st.file_uploader(label='',label_visibility='collapsed')
+if col_r.button("Upload your Data"):
+    uploaded_file = st.file_uploader(label="", label_visibility="collapsed")
     if uploaded_file is not None:
         col_r.write("You selected the file:", uploaded_file.name)
 
 st.markdown("##")
 st.markdown(
-    'If you wish to **explore** the app first, upload some **demo data** instead:',
+    "If you wish to **explore** the app first, upload some **demo data** instead:",
     unsafe_allow_html=True,
 )
 col_ll_mid, col_l_mid, col_c_mid, col_r_mid, col_rr_mid = st.columns(
