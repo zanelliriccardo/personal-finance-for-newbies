@@ -13,7 +13,7 @@ from utils import (
     get_wealth_history,
     get_portfolio_pivot,
     get_pnl_by_asset_class,
-    write_disclaimer
+    write_disclaimer,
 )
 from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class
 
