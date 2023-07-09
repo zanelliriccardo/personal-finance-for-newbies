@@ -13,6 +13,7 @@ from utils import (
     get_wealth_history,
     get_portfolio_pivot,
     get_pnl_by_asset_class,
+    write_disclaimer
 )
 from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class
 
@@ -57,7 +58,7 @@ if consider_fees:
 else:
     pnl = pf_actual_value - expense
     pnl_perc = 100 * (pf_actual_value - expense) / expense
-sign = "+" if pnl >= 0 else "-"
+sign = "+" if pnl >= 0 else ""
 
 col_l.metric(
     label="Actual Portfolio Value",
@@ -145,3 +146,5 @@ df_wealth = get_wealth_history(
 
 fig = plot_wealth(df=df_wealth)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+write_disclaimer()

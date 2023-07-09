@@ -120,9 +120,9 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_last_closing_price_from_api(ticker: str) -> List:
     today = datetime.utcnow()
-    yesterday = today - timedelta(days=1)
+    delayed = today - timedelta(days=3)
 
-    period1 = int(yesterday.timestamp())
+    period1 = int(delayed.timestamp())
     period2 = int(datetime.utcnow().timestamp())
 
     link = f'https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval=1d&events=history&includeAdjustedClose=true'
@@ -130,7 +130,7 @@ def get_last_closing_price_from_api(ticker: str) -> List:
     try:
         closing_date = pd.read_csv(link, usecols=['Date', 'Adj Close']).rename({'Adj Close': 'Close'})
         closing_date['Date'] = pd.to_datetime(closing_date['Date'])
-        closing_date = closing_date.values.tolist()
+        closing_date = closing_date.head(1).values.tolist()
     except:
         closing_date = None
 
@@ -303,3 +303,14 @@ def get_pnl_by_asset_class(
     )
     df_pnl = df_pnl.groupby(group_by)["pnl"].sum().reset_index().sort_values([group_by])
     return df_pnl
+
+
+def write_disclaimer() -> None:
+    st.markdown("***")
+    st.markdown(
+        '<center> <span style="font-size:0.7em; font-style:italic">\
+        This content is for educational purposes only and is under no circumstances intended\
+        to be used or considered as financial or investment advice\
+        </span> </center>',
+        unsafe_allow_html=True,
+    )
