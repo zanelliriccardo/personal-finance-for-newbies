@@ -34,6 +34,7 @@ col_l, col_r = st.columns([1, 0.8], gap="small")
 
 uploaded_file = col_l.file_uploader(
     label="Upload your Data",
+    label_visibility="collapsed",
 )
 if uploaded_file is not None:
     try:
