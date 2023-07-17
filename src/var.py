@@ -8,6 +8,8 @@ assets_path = str(
     os.path.join(*split_script_running_path[0 : len(split_script_running_path) - 1])
 )
 
+APP_VERSION = "0.1.0"
+
 # Data/images
 
 DATA_PATH = Path(assets_path, "data", "in")
