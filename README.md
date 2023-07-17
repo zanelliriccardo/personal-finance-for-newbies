@@ -31,7 +31,7 @@ To run the docker image using the host's network (which will make the app access
 To load and use your data, download and fill in the template with your accumulation plan's buy/sell transactions and upload it.
 Make sure you fill it in correctly. The fields to be entered are:
 
-- **Exchange**: name of the market (according to Yahoo Finance) [https://help.yahoo.com/kb/SLN2310.html](list of exchange suffixes);
+- **Exchange**: name of the market (according to Yahoo Finance) [list of exchange suffixes](https://help.yahoo.com/kb/SLN2310.html);
 - **Ticker**: symbol to identify a publicly traded security;
 - **Transaction Date**: date of transaction in DD/MM/YYYY format;
 - **Shares**: number of purchased/sold shares; please, include a minus sign to indicate selling;
