@@ -147,9 +147,9 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
-def get_last_closing_price_from_api(ticker: str) -> List:
+def get_last_closing_price_from_api(ticker: str, days_of_delay: int = 5) -> List:
     today = datetime.utcnow()
-    delayed = today - timedelta(days=3)
+    delayed = today - timedelta(days=days_of_delay)
 
     period1 = int(delayed.timestamp())
     period2 = int(datetime.utcnow().timestamp())
