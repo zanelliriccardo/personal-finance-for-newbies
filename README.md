@@ -27,6 +27,17 @@ To run the docker image using the host's network (which will make the app access
 
 - `docker run --network host personal-finance-for-newbies`
 
+## How can I use my own data?
+To load and use your data, download and fill in the template with your accumulation plan's buy/sell transactions and upload it.
+Make sure you fill it in correctly. The fields to be entered are:
+
+- **Exchange**: name of the market (according to Yahoo Finance) [https://help.yahoo.com/kb/SLN2310.html](list of exchange suffixes);
+- **Ticker**: symbol to identify a publicly traded security;
+- **Transaction Date**: date of transaction in DD/MM/YYYY format;
+- **Shares**: number of purchased/sold shares; please, include a minus sign to indicate selling;
+- **Price**: price of a single share;
+- **Fees**: transaction fees, if any.
+
 ## How can I help?
 
 ### To-Do list

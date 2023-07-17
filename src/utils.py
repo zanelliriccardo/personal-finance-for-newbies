@@ -14,36 +14,36 @@ from var import CACHE_EXPIRE_SECONDS
 def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
     df_storico = pd.read_excel(
         full_path,
-        sheet_name="Storico",
+        sheet_name="Transactions History",
         dtype={
-            "Borsa": str,
+            "Exchange": str,
             "Ticker": str,
-            "Quote": int,
-            "Prezzo (€)": float,
-            "Commissioni": float,
+            "Shares": int,
+            "Price (€)": float,
+            "Fees (€)": float,
         },
     ).rename(
         columns={
-            "Borsa": "exchange",
+            "Exchange": "exchange",
             "Ticker": "ticker",
-            "Data Operazione": "transaction_date",
-            "Quote": "shares",
-            "Prezzo (€)": "price",
-            "Commissioni (€)": "fees",
+            "Transaction Date": "transaction_date",
+            "Shares": "shares",
+            "Price (€)": "price",
+            "Fees (€)": "fees",
         }
     )
     df_storico["ap_amount"] = df_storico["shares"] * df_storico["price"]
     df_storico["ticker_yf"] = df_storico["ticker"] + "." + df_storico["exchange"]
 
     df_anagrafica = pd.read_excel(
-        full_path, sheet_name="Anagrafica Titoli", dtype=str
+        full_path, sheet_name="Securities Master Table", dtype=str
     ).rename(
         columns={
-            "Borsa": "exchange",
+            "Exchange": "exchange",
             "Ticker": "ticker",
-            "Nome ETF": "name",
-            "Tipologia": "asset_class",
-            "Macro Tipologia": "macro_asset_class",
+            "Security Name": "name",
+            "Asset Class": "asset_class",
+            "Macro Asset Class": "macro_asset_class",
         }
     )
     df_anagrafica["ticker_yf"] = (

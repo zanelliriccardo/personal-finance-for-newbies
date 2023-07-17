@@ -7,6 +7,7 @@ from var import (
     GLOBAL_STREAMLIT_STYLE,
     DATA_PATH,
     FAVICON,
+    APP_VERSION,
 )
 
 st.set_page_config(
@@ -18,7 +19,8 @@ st.set_page_config(
 
 st.markdown(GLOBAL_STREAMLIT_STYLE, unsafe_allow_html=True)
 
-st.title("Welcome to Personal Finance for Newbies!")
+st.title(f"Welcome to Personal Finance for Newbies!")
+st.text(f"v{APP_VERSION}")
 
 st.markdown(
     "PFN is a web app that – from buy/sell financial asset transactions – provides easy-to-use, \
@@ -45,7 +47,7 @@ if uploaded_file is not None:
         st.error("Please check your file format and make sure it matches the template")
         st.stop()
 
-with open(DATA_PATH / Path("demo.xlsx"), "rb") as f:
+with open(DATA_PATH / Path("template.xlsx"), "rb") as f:
     col_l.download_button(
         "Download Template",
         data=f,
