@@ -45,7 +45,7 @@ if uploaded_file is not None:
         st.error("Please check your file format and make sure it matches the template")
         st.stop()
 
-with open(DATA_PATH / Path("demo.xlsx"), "rb") as f:
+with open(DATA_PATH / Path("template.xlsx"), "rb") as f:
     col_l.download_button(
         "Download Template",
         data=f,
