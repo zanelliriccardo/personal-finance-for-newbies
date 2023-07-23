@@ -3,15 +3,18 @@ import streamlit as st
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     # PLT_CONFIG,
-    # PLT_CONFIG_NO_LOGO,
+    PLT_CONFIG_NO_LOGO,
     FAVICON,
 )
 
-# from utils import (
-#     sharpe_ratio,
-#     get_risk_free_rate_last_value,
-#     get_risk_free_rate_history,
-# )
+from utils import (
+    get_max_common_history,
+    # sharpe_ratio,
+    # get_risk_free_rate_last_value,
+    # get_risk_free_rate_history,
+)
+
+from plot import plot_correlation_map
 
 st.set_page_config(
     page_title="PFN | Advanced Stats",
@@ -21,9 +24,19 @@ st.set_page_config(
 )
 
 st.markdown(GLOBAL_STREAMLIT_STYLE, unsafe_allow_html=True)
-st.warning("Work in progress! Please, come back later", icon="🚧")
 
-# df_common_history = get_max_common_history(ticker_list=ticker_list)
+if "data" in st.session_state:
+    df_transactions = st.session_state["data"]
+    df_registry = st.session_state["dimensions"]
+else:
+    st.error("Oops... there's nothing to display. Go through 🏠 first to load the data")
+    st.stop()
+
+ticker_list = df_transactions["ticker_yf"].unique().tolist()
+df_common_history = get_max_common_history(ticker_list=ticker_list)
+
+fig = plot_correlation_map(df=df_common_history.corr(), lower_triangle_only=True)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
 # weights = [
 #     df_pivot[df_pivot["ticker_yf"].eq(x_)]["weight_pf"].values[0]

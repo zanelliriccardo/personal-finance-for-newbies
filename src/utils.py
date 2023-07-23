@@ -174,7 +174,10 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
 
     for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
         ticker_data = yf.Ticker(ticker_)
-        df_history[ticker_] = ticker_data.history(period="max", interval="1d",)[
+        df_history[ticker_] = ticker_data.history(
+            period="max",
+            interval="1d",
+        )[
             "Close"
         ].rename(ticker_)
 
@@ -274,12 +277,14 @@ def get_wealth_history(
         df_asset_allocation.loc[data, ticker] += total_shares
     df_asset_allocation = df_asset_allocation.cumsum()
 
-    df_wealth = (
+    df_wealth = pd.DataFrame(
         df_asset_allocation.multiply(df_prices.loc[begin_date:])
         .fillna(method="ffill")
         .sum(axis=1)
         .rename("ap_daily_value")
     )
+    df_wealth["diff_previous_day"] = df_wealth.diff()
+
     return df_wealth
 
 
