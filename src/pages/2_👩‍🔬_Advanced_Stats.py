@@ -9,9 +9,8 @@ from var import (
 
 from utils import (
     get_max_common_history,
-    # sharpe_ratio,
-    # get_risk_free_rate_last_value,
-    # get_risk_free_rate_history,
+    get_wealth_history,
+    write_disclaimer,
 )
 
 from plot import plot_correlation_map
@@ -35,14 +34,43 @@ else:
 ticker_list = df_transactions["ticker_yf"].unique().tolist()
 df_common_history = get_max_common_history(ticker_list=ticker_list)
 
-fig = plot_correlation_map(df=df_common_history.corr(), lower_triangle_only=True)
+st.markdown("## Correlation Matrix")
+
+col_l, col_c, col_r = st.columns([1, 0.15, 0.5], gap="small")
+
+first_transaction = df_transactions["transaction_date"].sort_values().values[0]
+first_day, last_day = col_l.select_slider(
+    "Select a time slice:",
+    options=df_common_history.index,
+    value=[first_transaction, df_common_history.index[-1]],
+    format_func=lambda value: str(value)[:10],
+    label_visibility="collapsed",
+)
+
+enhance_corr = col_r.radio(
+    "Kind of correlation to enhance:",
+    options=["Positive", "Null", "Negative"],
+    horizontal=True,
+)
+
+fig = plot_correlation_map(
+    df=df_common_history.loc[first_day:last_day, :].corr(),
+    enhance_correlation=enhance_corr.lower(),
+    lower_triangle_only=True,
+)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
-# weights = [
-#     df_pivot[df_pivot["ticker_yf"].eq(x_)]["weight_pf"].values[0]
-#     for x_ in df_common_history.columns
-# ]
-# weighted_average = pd.Series(np.average(df_common_history, weights=weights, axis=1))
+st.markdown("## Distribution of Daily Returns")
+
+# diff_prev_day = get_wealth_history(
+#     df_transactions=df_transactions,
+#     df_prices=get_max_common_history(ticker_list=ticker_list),
+# )['diff_previous_day']
+
+# import plotly.express as px
+# st.plotly_chart(px.histogram(diff_prev_day), use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+#################################
 
 # returns = np.log(weighted_average.div(weighted_average.shift(1))).fillna(0)
 
@@ -59,3 +87,5 @@ st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 # )
 
 # st.write(sr)
+
+write_disclaimer()
