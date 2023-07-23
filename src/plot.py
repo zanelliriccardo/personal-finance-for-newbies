@@ -56,7 +56,7 @@ def plot_wealth(df: pd.DataFrame) -> go.Figure:
         data_frame=df, x=df.index, y="ap_daily_value", custom_data=["diff_previous_day"]
     )
     fig.update_traces(
-        hovertemplate="%{x}: <b>%{y:,.0f}€</b> <extra>%{customdata:,.0f}€</extra>"
+        hovertemplate="%{x}: <b>%{y:,.0f}€</b> <extra>Gain/Loss on previous day: %{customdata:,.0f}€</extra>"
     )
     fig.update_layout(
         autosize=False,
@@ -72,12 +72,23 @@ def plot_wealth(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def plot_correlation_map(df: pd.DataFrame, lower_triangle_only: bool = False):
+def plot_correlation_map(
+    df: pd.DataFrame,
+    enhance_correlation: Literal["positive", "null", "negative"],
+    lower_triangle_only: bool = False,
+):
     if lower_triangle_only:
         mask = np.triu(np.ones_like(df, dtype=bool))
 
-    cuts = [-1, -0.3, 0.3, 0.7, 1]
-    colors = ["green", "darkblue", "darkorange", "red", "darkred"]
+    if enhance_correlation == "positive":
+        cuts = [-1, 0, 1]
+        colors = ["white", "white", "darkred"]
+    elif enhance_correlation == "null":
+        cuts = [-1, -0.3, 0, 0.3, 1]
+        colors = ["white", "white", "darkgreen", "white", "white"]
+    elif enhance_correlation == "negative":
+        cuts = [-1, 0, 1]
+        colors = ["darkblue", "white", "white"]
     colorscale = [[(cut_ + 1) / 2, col_] for cut_, col_ in zip(cuts, colors)]
 
     fig = go.Figure(
