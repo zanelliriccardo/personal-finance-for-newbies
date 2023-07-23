@@ -53,11 +53,11 @@ def plot_pnl_by_asset_class(
 
 def plot_wealth(df: pd.DataFrame) -> go.Figure:
     fig = px.area(
-        data_frame=df,
-        x=df.index,
-        y="ap_daily_value",
+        data_frame=df, x=df.index, y="ap_daily_value", custom_data=["diff_previous_day"]
     )
-    fig.update_traces(hovertemplate="%{x}: <b>%{y:,.0f}€</b>")
+    fig.update_traces(
+        hovertemplate="%{x}: <b>%{y:,.0f}€</b> <extra>%{customdata:,.0f}€</extra>"
+    )
     fig.update_layout(
         autosize=False,
         height=550,
@@ -69,4 +69,35 @@ def plot_wealth(df: pd.DataFrame) -> go.Figure:
         ),
         showlegend=False,
     )
+    return fig
+
+
+def plot_correlation_map(df: pd.DataFrame, lower_triangle_only: bool = False):
+    if lower_triangle_only:
+        mask = np.triu(np.ones_like(df, dtype=bool))
+
+    cuts = [-1, -0.3, 0.3, 0.7, 1]
+    colors = ["green", "darkblue", "darkorange", "red", "darkred"]
+    colorscale = [[(cut_ + 1) / 2, col_] for cut_, col_ in zip(cuts, colors)]
+
+    fig = go.Figure(
+        go.Heatmap(
+            z=df.mask(mask) if lower_triangle_only else df,
+            x=df.columns,
+            y=df.columns,
+            colorscale=colorscale,
+            zmin=-1,
+            zmax=1,
+        )
+    )
+    fig.update_traces(hovertemplate="<b>%{z:.2f} <extra></extra>")
+    fig.update_layout(
+        height=500,
+        hoverlabel_font_size=PLT_FONT_SIZE,
+        margin=dict(l=0, r=0, t=30, b=0),
+        yaxis=dict(autorange="reversed", showgrid=False),
+        # paper_bgcolor="rgba(0,0,0,0)",
+        # plot_bgcolor="rgba(0,0,0,0)",
+    )
+
     return fig
