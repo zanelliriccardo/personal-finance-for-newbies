@@ -34,7 +34,7 @@ else:
 ticker_list = df_transactions["ticker_yf"].unique().tolist()
 df_common_history = get_max_common_history(ticker_list=ticker_list)
 
-st.markdown("## Correlation Matrix")
+st.markdown("## Correlation of daily returns")
 
 col_l, col_c, col_r = st.columns([1, 0.15, 0.5], gap="small")
 
@@ -53,8 +53,28 @@ enhance_corr = col_r.radio(
     horizontal=True,
 )
 
+df_daily_rets = df_common_history.loc[first_day:last_day, :].pct_change()[1:]
+
 fig = plot_correlation_map(
-    df=df_common_history.loc[first_day:last_day, :].corr(),
+    df=df_daily_rets.corr(),
+    enhance_correlation=enhance_corr.lower(),
+    lower_triangle_only=True,
+)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+# TODO Crea un selettore e una fuzione
+import pandas as pd
+
+col_ = "asset_class"
+macs = df_registry[col_].unique()
+df_daily_rets_asset_class = pd.DataFrame(columns=macs)
+for mac_ in macs:
+    cols_to_sum = df_registry[df_registry[col_].eq(mac_)]["ticker_yf"].to_list()
+
+    df_daily_rets_asset_class[mac_] = df_daily_rets[cols_to_sum].sum(axis=1)
+
+fig = plot_correlation_map(
+    df=df_daily_rets_asset_class.corr(),
     enhance_correlation=enhance_corr.lower(),
     lower_triangle_only=True,
 )
