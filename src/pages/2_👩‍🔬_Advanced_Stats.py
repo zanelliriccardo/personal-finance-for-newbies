@@ -37,6 +37,7 @@ level = col_l_up.radio(
     label="Aggregate by:",
     options=["Macro Asset Classes", "Asset Classes", "Ticker"],
     horizontal=True,
+    index=2,
 )
 
 enhance_corr = col_r_up.radio(
