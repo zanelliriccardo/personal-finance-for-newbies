@@ -274,12 +274,14 @@ def get_wealth_history(
         df_asset_allocation.loc[data, ticker] += total_shares
     df_asset_allocation = df_asset_allocation.cumsum()
 
-    df_wealth = (
+    df_wealth = pd.DataFrame(
         df_asset_allocation.multiply(df_prices.loc[begin_date:])
         .fillna(method="ffill")
         .sum(axis=1)
         .rename("ap_daily_value")
     )
+    df_wealth["diff_previous_day"] = df_wealth.diff()
+
     return df_wealth
 
 
@@ -341,3 +343,25 @@ def write_disclaimer() -> None:
         </span> </center>',
         unsafe_allow_html=True,
     )
+
+
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_daily_returns(
+    df: pd.DataFrame,
+    df_registry: pd.DataFrame,
+    level: Literal["ticker", "asset_class", "macro_asset_class"],
+):
+    df_daily_rets = df.pct_change()[1:]
+
+    if level == "ticker":
+        return df_daily_rets
+    else:
+        classes = df_registry[level].unique()
+        df_daily_rets_classes = pd.DataFrame(columns=classes)
+        for class_ in classes:
+            cols_to_sum = df_registry[df_registry[level].eq(class_)][
+                "ticker_yf"
+            ].to_list()
+
+            df_daily_rets_classes[class_] = df_daily_rets[cols_to_sum].sum(axis=1)
+        return df_daily_rets_classes
