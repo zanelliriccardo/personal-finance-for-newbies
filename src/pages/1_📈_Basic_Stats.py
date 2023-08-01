@@ -5,6 +5,7 @@ from var import (
     PLT_CONFIG,
     PLT_CONFIG_NO_LOGO,
     FAVICON,
+    DICT_GROUPBY_LEVELS,
 )
 from utils import (
     aggregate_by_ticker,
@@ -86,16 +87,11 @@ with st.expander("Show pivot table"):
         options=["Macro Asset Classes", "Asset Classes", "Ticker"],
         horizontal=True,
     )
-    dict_group_by = {
-        "Macro Asset Classes": "macro_asset_class",
-        "Asset Classes": "asset_class",
-        "Ticker": "ticker",
-    }
     df_pivot_ = get_portfolio_pivot(
         df=df_j,
         df_dimensions=df_anagrafica,
         pf_actual_value=pf_actual_value,
-        aggregation_level=dict_group_by[group_by],
+        aggregation_level=DICT_GROUPBY_LEVELS[group_by],
     )
     df_pivot_.index += 1
     st.table(

@@ -1,16 +1,11 @@
 import streamlit as st
 
-from var import (
-    GLOBAL_STREAMLIT_STYLE,
-    # PLT_CONFIG,
-    PLT_CONFIG_NO_LOGO,
-    FAVICON,
-)
+from var import GLOBAL_STREAMLIT_STYLE, PLT_CONFIG_NO_LOGO, FAVICON, DICT_GROUPBY_LEVELS
 
 from utils import (
     get_max_common_history,
-    get_wealth_history,
     write_disclaimer,
+    get_daily_returns,
 )
 
 from plot import plot_correlation_map
@@ -36,10 +31,25 @@ df_common_history = get_max_common_history(ticker_list=ticker_list)
 
 st.markdown("## Correlation of daily returns")
 
-col_l, col_c, col_r = st.columns([1, 0.15, 0.5], gap="small")
+col_l_up, col_r_up = st.columns([1, 1], gap="small")
+
+level = col_l_up.radio(
+    label="Aggregate by:",
+    options=["Macro Asset Classes", "Asset Classes", "Ticker"],
+    horizontal=True,
+)
+
+enhance_corr = col_r_up.radio(
+    "Kind of correlation to enhance:",
+    options=["Positive", "Null", "Negative"],
+    horizontal=True,
+)
+
+st.markdown("")
+col_l_mid, col_r_mid = st.columns([1, 0.3], gap="small")
 
 first_transaction = df_transactions["transaction_date"].sort_values().values[0]
-first_day, last_day = col_l.select_slider(
+first_day, last_day = col_l_mid.select_slider(
     "Select a time slice:",
     options=df_common_history.index,
     value=[first_transaction, df_common_history.index[-1]],
@@ -47,13 +57,11 @@ first_day, last_day = col_l.select_slider(
     label_visibility="collapsed",
 )
 
-enhance_corr = col_r.radio(
-    "Kind of correlation to enhance:",
-    options=["Positive", "Null", "Negative"],
-    horizontal=True,
+df_daily_rets = get_daily_returns(
+    df=df_common_history.loc[first_day:last_day, :],
+    df_registry=df_registry,
+    level=DICT_GROUPBY_LEVELS[level],
 )
-
-df_daily_rets = df_common_history.loc[first_day:last_day, :].pct_change()[1:]
 
 fig = plot_correlation_map(
     df=df_daily_rets.corr(),
@@ -62,25 +70,7 @@ fig = plot_correlation_map(
 )
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
-# TODO Crea un selettore e una fuzione
-import pandas as pd
-
-col_ = "asset_class"
-macs = df_registry[col_].unique()
-df_daily_rets_asset_class = pd.DataFrame(columns=macs)
-for mac_ in macs:
-    cols_to_sum = df_registry[df_registry[col_].eq(mac_)]["ticker_yf"].to_list()
-
-    df_daily_rets_asset_class[mac_] = df_daily_rets[cols_to_sum].sum(axis=1)
-
-fig = plot_correlation_map(
-    df=df_daily_rets_asset_class.corr(),
-    enhance_correlation=enhance_corr.lower(),
-    lower_triangle_only=True,
-)
-st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
-
-st.markdown("## Distribution of Daily Returns")
+# st.markdown("## Distribution of Daily Returns")
 
 # diff_prev_day = get_wealth_history(
 #     df_transactions=df_transactions,
