@@ -8,7 +8,7 @@ assets_path = str(
     os.path.join(*split_script_running_path[0 : len(split_script_running_path) - 1])
 )
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.1"
 
 # Data/images
 
@@ -44,3 +44,8 @@ PLT_FONT_SIZE = 14
 # Others
 
 TRADING_DAYS_YEAR = 252
+DICT_GROUPBY_LEVELS = {
+    "Macro Asset Classes": "macro_asset_class",
+    "Asset Classes": "asset_class",
+    "Ticker": "ticker",
+}
