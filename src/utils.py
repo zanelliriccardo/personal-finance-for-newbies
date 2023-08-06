@@ -365,3 +365,15 @@ def get_daily_returns(
 
             df_daily_rets_classes[class_] = df_daily_rets[cols_to_sum].sum(axis=1)
         return df_daily_rets_classes
+
+
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_drawdown(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.fillna(0.0)
+    cumulative_rets = (df + 1).cumprod()
+    running_max = np.maximum.accumulate(cumulative_rets)
+    return (cumulative_rets - running_max).div(running_max)
+
+
+def get_max_dd(df: pd.DataFrame):
+    return get_drawdown(df).min()

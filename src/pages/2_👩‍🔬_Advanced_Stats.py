@@ -12,6 +12,7 @@ from utils import (
     get_max_common_history,
     write_disclaimer,
     get_daily_returns,
+    get_drawdown,
 )
 
 from plot import plot_correlation_map, plot_daily_returns
@@ -99,6 +100,16 @@ fig = plot_daily_returns(
     df=df_daily_rets[cols], annotation_text="<br>".join(annotation_list)
 )
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+df_dd = get_drawdown(df_daily_rets[cols])
+
+import plotly.express as px
+from utils import get_max_dd
+
+fig = px.area(data_frame=df_dd)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+st.write(get_max_dd(df_daily_rets))
 
 #################################
 
