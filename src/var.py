@@ -47,5 +47,5 @@ TRADING_DAYS_YEAR = 252
 DICT_GROUPBY_LEVELS = {
     "Macro Asset Classes": "macro_asset_class",
     "Asset Classes": "asset_class",
-    "Ticker": "ticker",
+    "Tickers": "ticker",
 }

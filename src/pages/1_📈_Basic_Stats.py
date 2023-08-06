@@ -84,7 +84,7 @@ st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 with st.expander("Show pivot table"):
     group_by = st.radio(
         label="Aggregate by:",
-        options=["Macro Asset Classes", "Asset Classes", "Ticker"],
+        options=["Macro Asset Classes", "Asset Classes", "Tickers"],
         horizontal=True,
     )
     df_pivot_ = get_portfolio_pivot(

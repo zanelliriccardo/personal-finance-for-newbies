@@ -1,6 +1,12 @@
 import streamlit as st
 
-from var import GLOBAL_STREAMLIT_STYLE, PLT_CONFIG_NO_LOGO, FAVICON, DICT_GROUPBY_LEVELS
+from var import (
+    GLOBAL_STREAMLIT_STYLE,
+    PLT_CONFIG_NO_LOGO,
+    FAVICON,
+    DICT_GROUPBY_LEVELS,
+    PLT_CONFIG,
+)
 
 from utils import (
     get_max_common_history,
@@ -8,7 +14,7 @@ from utils import (
     get_daily_returns,
 )
 
-from plot import plot_correlation_map
+from plot import plot_correlation_map, plot_daily_returns
 
 st.set_page_config(
     page_title="PFN | Advanced Stats",
@@ -29,33 +35,35 @@ else:
 ticker_list = df_transactions["ticker_yf"].unique().tolist()
 df_common_history = get_max_common_history(ticker_list=ticker_list)
 
-st.markdown("## Correlation of daily returns")
+st.markdown("## Global settings")
 
-col_l_up, col_r_up = st.columns([1, 1], gap="small")
+col_l_up, col_r_up = st.columns([0.5, 1], gap="small")
 
 level = col_l_up.radio(
     label="Aggregate by:",
-    options=["Macro Asset Classes", "Asset Classes", "Ticker"],
+    options=["Macro Asset Classes", "Asset Classes", "Tickers"],
     horizontal=True,
     index=2,
 )
 
-enhance_corr = col_r_up.radio(
-    "Kind of correlation to enhance:",
-    options=["Positive", "Null", "Negative"],
-    horizontal=True,
-)
-
-st.markdown("")
-col_l_mid, col_r_mid = st.columns([1, 0.3], gap="small")
-
+col_r_up.markdown("")
 first_transaction = df_transactions["transaction_date"].sort_values().values[0]
-first_day, last_day = col_l_mid.select_slider(
+first_day, last_day = col_r_up.select_slider(
     "Select a time slice:",
     options=df_common_history.index,
     value=[first_transaction, df_common_history.index[-1]],
     format_func=lambda value: str(value)[:10],
     label_visibility="collapsed",
+)
+
+st.markdown("***")
+
+st.markdown("## Correlation of daily returns")
+
+enhance_corr = st.radio(
+    "Kind of correlation to enhance:",
+    options=["Positive", "Null", "Negative"],
+    horizontal=True,
 )
 
 df_daily_rets = get_daily_returns(
@@ -71,15 +79,26 @@ fig = plot_correlation_map(
 )
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
-# st.markdown("## Distribution of Daily Returns")
+st.markdown("***")
 
-# diff_prev_day = get_wealth_history(
-#     df_transactions=df_transactions,
-#     df_prices=get_max_common_history(ticker_list=ticker_list),
-# )['diff_previous_day']
+st.markdown("## Distribution of daily returns")
 
-# import plotly.express as px
-# st.plotly_chart(px.histogram(diff_prev_day), use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+default_objs = df_daily_rets.columns.to_list()
+cols = st.multiselect(
+    f"Choose the {level.lower()} to display:",
+    options=default_objs,
+    default=default_objs[1],
+)
+
+annotation_list = [
+    f"<b>{col_}</b> ⟶ excess kurtosis: {df_daily_rets[col_].kurtosis().round(1)}, skewness: {df_daily_rets[col_].skew().round(1)}"
+    for col_ in cols
+]
+
+fig = plot_daily_returns(
+    df=df_daily_rets[cols], annotation_text="<br>".join(annotation_list)
+)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 
 #################################
 
