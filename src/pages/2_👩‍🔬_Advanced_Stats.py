@@ -5,17 +5,18 @@ from var import (
     PLT_CONFIG_NO_LOGO,
     FAVICON,
     DICT_GROUPBY_LEVELS,
+    DICT_FREQ_RESAMPLE,
     PLT_CONFIG,
 )
 
 from utils import (
     get_max_common_history,
     write_disclaimer,
-    get_daily_returns,
+    get_period_returns,
     get_drawdown,
+    get_max_dd,
 )
-
-from plot import plot_correlation_map, plot_daily_returns
+from plot import plot_correlation_map, plot_returns, plot_drawdown
 
 st.set_page_config(
     page_title="PFN | Advanced Stats",
@@ -38,18 +39,27 @@ df_common_history = get_max_common_history(ticker_list=ticker_list)
 
 st.markdown("## Global settings")
 
-col_l_up, col_r_up = st.columns([0.5, 1], gap="small")
+col_l_up, col_r_up = st.columns([1, 1], gap="small")
 
 level = col_l_up.radio(
     label="Aggregate by:",
     options=["Macro Asset Classes", "Asset Classes", "Tickers"],
     horizontal=True,
     index=2,
+    key="level",
+)
+freq = col_r_up.radio(
+    label="Frequency of returns:",
+    options=["Quarter", "Month", "Week", "Day"],
+    horizontal=True,
+    index=3,
+    key="freq",
 )
 
-col_r_up.markdown("")
+st.markdown("<br>", unsafe_allow_html=True)
+col_l_mid, col_c_mid, col_r_mid = st.columns([0.3, 1, 0.3], gap="small")
 first_transaction = df_transactions["transaction_date"].sort_values().values[0]
-first_day, last_day = col_r_up.select_slider(
+first_day, last_day = col_c_mid.select_slider(
     "Select a time slice:",
     options=df_common_history.index,
     value=[first_transaction, df_common_history.index[-1]],
@@ -59,7 +69,7 @@ first_day, last_day = col_r_up.select_slider(
 
 st.markdown("***")
 
-st.markdown("## Correlation of daily returns")
+st.markdown(f"## Correlation of {freq.lower().replace('day','dai')}ly returns")
 
 enhance_corr = st.radio(
     "Kind of correlation to enhance:",
@@ -67,14 +77,15 @@ enhance_corr = st.radio(
     horizontal=True,
 )
 
-df_daily_rets = get_daily_returns(
+df_rets = get_period_returns(
     df=df_common_history.loc[first_day:last_day, :],
     df_registry=df_registry,
+    period=DICT_FREQ_RESAMPLE[freq],
     level=DICT_GROUPBY_LEVELS[level],
 )
 
 fig = plot_correlation_map(
-    df=df_daily_rets.corr(),
+    df=df_rets.corr(),
     enhance_correlation=enhance_corr.lower(),
     lower_triangle_only=True,
 )
@@ -82,9 +93,9 @@ st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
 st.markdown("***")
 
-st.markdown("## Distribution of daily returns")
+st.markdown(f"## Distribution of {freq.lower().replace('day','dai')}ly returns")
 
-default_objs = df_daily_rets.columns.to_list()
+default_objs = df_rets.columns.to_list()
 cols = st.multiselect(
     f"Choose the {level.lower()} to display:",
     options=default_objs,
@@ -92,24 +103,43 @@ cols = st.multiselect(
 )
 
 annotation_list = [
-    f"<b>{col_}</b> ⟶ excess kurtosis: {df_daily_rets[col_].kurtosis().round(1)}, skewness: {df_daily_rets[col_].skew().round(1)}"
+    f"<b>{col_}</b> ⟶ excess kurtosis: {df_rets[col_].kurtosis().round(1)}, skewness: {df_rets[col_].skew().round(1)}"
     for col_ in cols
 ]
 
-fig = plot_daily_returns(
-    df=df_daily_rets[cols], annotation_text="<br>".join(annotation_list)
-)
+fig = plot_returns(df=df_rets[cols], annotation_text="<br>".join(annotation_list))
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 
-df_dd = get_drawdown(df_daily_rets[cols])
+st.markdown("***")
 
-import plotly.express as px
-from utils import get_max_dd
+st.markdown(f"## Drawdown in {freq.lower().replace('day','dai')}ly returns")
 
-fig = px.area(data_frame=df_dd)
+if freq == "Day":
+    window = st.radio(
+        "Specify a rolling time window:",
+        options=[
+            "No window (whole time span)",
+            "1 month (21 days)",
+            "3 months (63 days)",
+        ],
+        horizontal=True,
+    )
+    if window == "No window (whole time span)":
+        df_dd = get_drawdown(df_rets[cols])
+    elif window == "3 months (63 days)":
+        df_dd = df_rets[cols].rolling(window=63).apply(get_max_dd)
+    elif window == "1 month (21 days)":
+        df_dd = df_rets[cols].rolling(window=21).apply(get_max_dd)
+else:
+    df_dd = get_drawdown(df_rets[cols])
+
+fig = plot_drawdown(df=df_dd)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 
-st.write(get_max_dd(df_daily_rets))
+# window = 30
+# df_m_dd = df_rets.rolling(window).apply(get_max_dd)
+# fig = plot_drawdown(df=df_m_dd[cols])
+# st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 
 #################################
 

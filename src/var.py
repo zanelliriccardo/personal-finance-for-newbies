@@ -49,3 +49,10 @@ DICT_GROUPBY_LEVELS = {
     "Asset Classes": "asset_class",
     "Tickers": "ticker",
 }
+DICT_FREQ_RESAMPLE = {
+    "Year": "Y",
+    "Quarter": "Q",
+    "Month": "M",
+    "Week": "W",
+    "Day": None,
+}

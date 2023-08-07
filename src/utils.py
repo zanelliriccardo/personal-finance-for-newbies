@@ -346,32 +346,52 @@ def write_disclaimer() -> None:
 
 
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
-def get_daily_returns(
+def get_period_returns(
     df: pd.DataFrame,
     df_registry: pd.DataFrame,
+    period: Literal["Y", "Q", "M", "W", None],
     level: Literal["ticker", "asset_class", "macro_asset_class"],
 ):
-    df_daily_rets = df.pct_change()[1:]
+    # Calcolo il ritorno
+    df_rets = df.pct_change()[1:]
+    # Se il periodo è None, la frequenza è giornaliera
+    if period is None:
+        # Se il livello è quello del ticker, non devo fare altro
+        if level == "ticker":
+            return df_rets
+        # Altrimenti sommo al livello delle asset class
+        else:
+            classes = df_registry[level].unique()
+            df_rets_classes = pd.DataFrame(columns=classes)
+            for class_ in classes:
+                cols_to_sum = df_registry[df_registry[level].eq(class_)][
+                    "ticker_yf"
+                ].to_list()
 
-    if level == "ticker":
-        return df_daily_rets
+                df_rets_classes[class_] = df_rets[cols_to_sum].sum(axis=1)
+            return df_rets_classes
+    # Se il periodo non è None, faccio resampling al periodo desiderato
     else:
-        classes = df_registry[level].unique()
-        df_daily_rets_classes = pd.DataFrame(columns=classes)
-        for class_ in classes:
-            cols_to_sum = df_registry[df_registry[level].eq(class_)][
-                "ticker_yf"
-            ].to_list()
+        df_rets_resampled = df_rets.resample(period).agg(lambda x: (x + 1).prod() - 1)
+        if level == "ticker":
+            return df_rets_resampled
+        else:
+            classes = df_registry[level].unique()
+            df_rets_classes = pd.DataFrame(columns=classes)
+            for class_ in classes:
+                cols_to_sum = df_registry[df_registry[level].eq(class_)][
+                    "ticker_yf"
+                ].to_list()
 
-            df_daily_rets_classes[class_] = df_daily_rets[cols_to_sum].sum(axis=1)
-        return df_daily_rets_classes
+                df_rets_classes[class_] = df_rets_resampled[cols_to_sum].sum(axis=1)
+            return df_rets_classes
 
 
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_drawdown(df: pd.DataFrame) -> pd.DataFrame:
     df = df.fillna(0.0)
     cumulative_rets = (df + 1).cumprod()
-    running_max = np.maximum.accumulate(cumulative_rets)
+    running_max = cumulative_rets.cummax()
     return (cumulative_rets - running_max).div(running_max)
 
 
