@@ -111,7 +111,7 @@ def plot_correlation_map(
     return fig
 
 
-def plot_daily_returns(df: pd.DataFrame, annotation_text: str = "") -> go.Figure():
+def plot_returns(df: pd.DataFrame, annotation_text: str = "") -> go.Figure():
     fig = px.histogram(df, barmode="overlay", nbins=200)
     fig.update_layout(
         autosize=False,
@@ -119,7 +119,7 @@ def plot_daily_returns(df: pd.DataFrame, annotation_text: str = "") -> go.Figure
         margin=dict(l=0, r=0, t=35, b=0),
         legend=dict(title=""),
         yaxis=dict(title="Occurrences", showgrid=False, tickformat=","),
-        xaxis=dict(title="Daily returns", tickformat=".0%"),
+        xaxis=dict(title="Daily returns", tickformat=".1%"),
     )
     fig.add_annotation(
         xref="x domain",
@@ -134,5 +134,19 @@ def plot_daily_returns(df: pd.DataFrame, annotation_text: str = "") -> go.Figure
     fig.update_traces(
         hovertemplate=None,
         hoverinfo="skip",
+    )
+    return fig
+
+
+def plot_drawdown(df: pd.DataFrame) -> go.Figure:
+    fig = px.area(data_frame=df)
+    fig.update_traces(hovertemplate="%{x}: <b>%{y:.1%}</b>")
+    fig.update_layout(
+        autosize=False,
+        height=600,
+        margin=dict(l=0, r=0, t=35, b=0),
+        legend=dict(title=""),
+        yaxis=dict(title="Drawdown", showgrid=False, tickformat=".1%"),
+        xaxis=dict(title=""),
     )
     return fig
