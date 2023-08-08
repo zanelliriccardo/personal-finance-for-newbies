@@ -111,8 +111,12 @@ def plot_correlation_map(
     return fig
 
 
-def plot_returns(df: pd.DataFrame, annotation_text: str = "") -> go.Figure():
-    fig = px.histogram(df, barmode="overlay", nbins=200)
+def plot_returns(
+    df: pd.DataFrame, annotation_text: str = "", min_resolution: float = 0.005
+) -> go.Figure():
+    n_bins = int(np.ceil((abs(df.max() - df.min()).div(min_resolution)).max()))
+
+    fig = px.histogram(df, barmode="overlay", nbins=n_bins)
     fig.update_layout(
         autosize=False,
         height=650,
