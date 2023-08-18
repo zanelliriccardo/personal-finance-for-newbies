@@ -43,7 +43,7 @@ def plot_pnl_by_asset_class(
     fig.update_traces(texttemplate="%{y:.1f}")
     fig.update_layout(
         autosize=False,
-        height=500,
+        height=550,
         margin=dict(l=0, r=0, t=20, b=20),
         barmode="stack",
         yaxis=dict(title="PnL", showgrid=False, tickformat=",.0f", ticksuffix=" €"),
@@ -101,14 +101,56 @@ def plot_correlation_map(
             zmax=1,
         )
     )
-    fig.update_traces(hovertemplate="<b>%{z:.2f} <extra></extra>")
+    fig.update_traces(hovertemplate="%{y} - %{x}: <b>%{z:.2f}</b><extra></extra>")
     fig.update_layout(
         height=500,
         hoverlabel_font_size=PLT_FONT_SIZE,
         margin=dict(l=0, r=0, t=30, b=0),
         yaxis=dict(autorange="reversed", showgrid=False),
-        # paper_bgcolor="rgba(0,0,0,0)",
-        # plot_bgcolor="rgba(0,0,0,0)",
     )
+    return fig
 
+
+def plot_returns(
+    df: pd.DataFrame, annotation_text: str = "", min_resolution: float = 0.005
+) -> go.Figure():
+    n_bins = int(np.ceil((abs(df.max() - df.min()).div(min_resolution)).max()))
+
+    fig = px.histogram(df, barmode="overlay", nbins=n_bins)
+    fig.update_layout(
+        autosize=False,
+        height=650,
+        margin=dict(l=0, r=0, t=35, b=0),
+        legend=dict(title=""),
+        yaxis=dict(title="Occurrences", showgrid=False, tickformat=","),
+        xaxis=dict(title="Daily returns", tickformat=".1%"),
+    )
+    fig.add_annotation(
+        xref="x domain",
+        yref="y domain",
+        x=0.01,
+        y=1.03,
+        text=annotation_text,
+        font_size=14.5,
+        showarrow=False,
+        align="left",
+    )
+    fig.update_traces(
+        hovertemplate="%{x} return (%{y} occurr.)",
+        hoverinfo="skip",
+    )
+    return fig
+
+
+def plot_drawdown(df: pd.DataFrame) -> go.Figure:
+    fig = px.area(data_frame=df)
+    fig.update_traces(hovertemplate="%{x}: <b>%{y:.1%}</b>")
+    fig.update_layout(
+        autosize=False,
+        height=600,
+        margin=dict(l=0, r=0, t=35, b=0),
+        legend=dict(title=""),
+        yaxis=dict(title="Drawdown", showgrid=False, tickformat=".1%"),
+        xaxis=dict(title=""),
+    )
     return fig
