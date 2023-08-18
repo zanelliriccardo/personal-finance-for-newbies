@@ -136,7 +136,7 @@ def plot_returns(
         align="left",
     )
     fig.update_traces(
-        hovertemplate=None,
+        hovertemplate="%{x} return (%{y} occurr.)",
         hoverinfo="skip",
     )
     return fig

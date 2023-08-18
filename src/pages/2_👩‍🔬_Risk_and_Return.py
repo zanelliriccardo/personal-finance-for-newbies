@@ -100,6 +100,7 @@ cols = st.multiselect(
     f"Choose the {level.lower()} to display:",
     options=default_objs,
     default=default_objs[1],
+    key='sel_lev_1',
 )
 
 annotation_list = [
@@ -113,6 +114,13 @@ st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 st.markdown("***")
 
 st.markdown(f"## Drawdown in {freq.lower().replace('day','dai')}ly returns")
+
+cols = st.multiselect(
+    f"Choose the {level.lower()} to display:",
+    options=default_objs,
+    default=default_objs[1],
+    key='sel_lev_2',
+)
 
 if freq == "Day":
     window = st.radio(
