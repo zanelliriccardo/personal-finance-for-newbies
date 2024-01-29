@@ -63,7 +63,10 @@ first_transaction = df_transactions["transaction_date"].sort_values().values[0]
 first_day, last_day = col_c_mid.select_slider(
     "Select a time slice:",
     options=df_common_history.index,
-    value=[max(df_common_history.index[0], first_transaction), df_common_history.index[-1]],
+    value=[
+        max(df_common_history.index[0], first_transaction),
+        df_common_history.index[-1],
+    ],
     format_func=lambda value: str(value)[:10],
     label_visibility="collapsed",
 )
@@ -101,7 +104,7 @@ cols = st.multiselect(
     f"Choose the {level.lower()} to display:",
     options=default_objs,
     default=default_objs[1],
-    key='sel_lev_1',
+    key="sel_lev_1",
 )
 
 annotation_list = [
@@ -120,7 +123,7 @@ cols = st.multiselect(
     f"Choose the {level.lower()} to display:",
     options=default_objs,
     default=default_objs[1],
-    key='sel_lev_2',
+    key="sel_lev_2",
 )
 
 if freq == "Day":
