@@ -59,10 +59,11 @@ freq = col_r_up.radio(
 st.markdown("<br>", unsafe_allow_html=True)
 col_l_mid, col_c_mid, col_r_mid = st.columns([0.3, 1, 0.3], gap="small")
 first_transaction = df_transactions["transaction_date"].sort_values().values[0]
+
 first_day, last_day = col_c_mid.select_slider(
     "Select a time slice:",
     options=df_common_history.index,
-    value=[first_transaction, df_common_history.index[-1]],
+    value=[max(df_common_history.index[0], first_transaction), df_common_history.index[-1]],
     format_func=lambda value: str(value)[:10],
     label_visibility="collapsed",
 )

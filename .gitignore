@@ -152,6 +152,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-*.xlsx
-!demo.xlsx
-!template.xlsx
+!data/in/demo.xlsx
+!data/in/template.xlsx
+data/in/*.pickle
