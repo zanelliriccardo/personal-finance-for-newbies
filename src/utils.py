@@ -10,7 +10,7 @@ import numpy as np
 from var import CACHE_EXPIRE_SECONDS
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
     df_storico = pd.read_excel(
         full_path,
@@ -81,7 +81,7 @@ def write_load_message(df_data: pd.DataFrame, df_dimensions: pd.DataFrame) -> No
     )
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def aggregate_by_ticker(df: pd.DataFrame, in_pf_only: bool = False) -> pd.DataFrame:
     df_portfolio = (
         df.groupby("ticker_yf")
@@ -124,7 +124,7 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
                 ticker_data.history(
                     period="1d",
                     interval="1d",
-                )["Close "]
+                )["Close"]
                 .reset_index()
                 .values.tolist()
             )
@@ -174,7 +174,10 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
 
     for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
         ticker_data = yf.Ticker(ticker_)
-        df_history[ticker_] = ticker_data.history(period="max", interval="1d",)[
+        df_history[ticker_] = ticker_data.history(
+            period="max",
+            interval="1d",
+        )[
             "Close"
         ].rename(ticker_)
 
@@ -252,14 +255,26 @@ def sharpe_ratio(
 
 @st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_wealth_history(
-    df_transactions: pd.DataFrame, df_prices: pd.DataFrame
+    df_transactions: pd.DataFrame, ticker_list: list[str]
 ) -> pd.Series:
-    ticker_list = df_prices.columns.to_list()
-    df_transactions = df_transactions[df_transactions["ticker_yf"].isin(ticker_list)]
-
     begin_date = df_transactions["transaction_date"].min()
     today = datetime.now().date()
     date_range = pd.date_range(start=begin_date, end=today, freq="D")
+
+    # There may be missing data, for instance due to an ETF changing its name after
+    # one or more purchases (as happened to MWRD on 17/01/2024); since in these cases
+    # the history of the ‘old’ ETF is not retrieved, we assume that the first non-null
+    # price found can be propagated (as a constant) backwards
+    df_prices = (
+        pd.concat(
+            [get_full_price_history(ticker_list)[t_] for t_ in ticker_list],
+            axis=1,
+        )
+        .loc[begin_date:]
+        .bfill()
+    )
+
+    df_transactions = df_transactions[df_transactions["ticker_yf"].isin(ticker_list)]
 
     df_asset_allocation = pd.DataFrame(
         index=date_range,
@@ -276,7 +291,7 @@ def get_wealth_history(
 
     df_wealth = pd.DataFrame(
         df_asset_allocation.multiply(df_prices.loc[begin_date:])
-        .fillna(method="ffill")
+        .ffill()
         .sum(axis=1)
         .rename("ap_daily_value")
     )
