@@ -135,10 +135,7 @@ st.markdown("***")
 
 st.markdown("## Daily value of the Accumulation Plan")
 
-df_wealth = get_wealth_history(
-    df_transactions=df_storico,
-    df_prices=get_max_common_history(ticker_list=ticker_list),
-)
+df_wealth = get_wealth_history(df_transactions=df_storico, ticker_list=ticker_list)
 
 fig = plot_wealth(df=df_wealth)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
