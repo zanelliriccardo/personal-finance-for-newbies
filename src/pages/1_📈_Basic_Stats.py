@@ -10,7 +10,6 @@ from var import (
 from utils import (
     aggregate_by_ticker,
     get_last_closing_price,
-    get_max_common_history,
     get_wealth_history,
     get_portfolio_pivot,
     get_pnl_by_asset_class,
