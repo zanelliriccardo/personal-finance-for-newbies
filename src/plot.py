@@ -113,7 +113,7 @@ def plot_correlation_map(
 
 def plot_returns(
     df: pd.DataFrame, annotation_text: str = "", min_resolution: float = 0.005
-) -> go.Figure():
+) -> go.Figure:
     n_bins = int(np.ceil((abs(df.max() - df.min()).div(min_resolution)).max()))
 
     fig = px.histogram(df, barmode="overlay", nbins=n_bins)
@@ -144,7 +144,9 @@ def plot_returns(
 
 def plot_drawdown(df: pd.DataFrame) -> go.Figure:
     fig = px.area(data_frame=df)
-    fig.update_traces(hovertemplate="%{x}: <b>%{y:.1%}</b>")
+    fig.update_traces(
+        hovertemplate="%{x}: <b>%{y:.1%}</b>", stackgroup=None, fill="tozeroy"
+    )
     fig.update_layout(
         autosize=False,
         height=600,
