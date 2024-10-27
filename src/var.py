@@ -13,7 +13,7 @@ APP_VERSION = "0.2.0"
 # Data/images
 
 DATA_PATH = Path(assets_path, "data", "in")
-FAVICON = Image.open(Path(assets_path, "images", "favicon.ico"))
+FAVICON = Image.open(Path(assets_path, "images", "piggybank.ico"))
 
 # Streamlit/Plotly vars
 
