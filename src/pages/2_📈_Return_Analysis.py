@@ -1,9 +1,8 @@
 import streamlit as st
 
 from input_output import write_disclaimer, get_max_common_history
-from risk import get_drawdown, get_max_dd
 from returns import get_period_returns
-from plot import plot_correlation_map, plot_returns, plot_drawdown
+from plot import plot_correlation_map, plot_returns
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -118,61 +117,5 @@ annotation_list = [
 
 fig = plot_returns(df=df_rets[cols], annotation_text="<br>".join(annotation_list))
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
-
-st.markdown("***")
-
-st.markdown(f"## Drawdown in {freq.lower().replace('day','dai')}ly returns")
-
-cols = st.multiselect(
-    f"Choose the {level.lower()} to display:",
-    options=default_objs,
-    default=default_objs[1],
-    key="sel_lev_2",
-)
-
-if freq == "Day":
-    window = st.radio(
-        "Specify a rolling time window:",
-        options=[
-            "No window (whole time span)",
-            "1 month (21 days)",
-            "3 months (63 days)",
-        ],
-        horizontal=True,
-    )
-    if window == "No window (whole time span)":
-        df_dd = get_drawdown(df_rets[cols])
-    elif window == "3 months (63 days)":
-        df_dd = df_rets[cols].rolling(window=63).apply(get_max_dd)
-    elif window == "1 month (21 days)":
-        df_dd = df_rets[cols].rolling(window=21).apply(get_max_dd)
-else:
-    df_dd = get_drawdown(df_rets[cols])
-
-fig = plot_drawdown(df=df_dd)
-st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
-
-# window = 30
-# df_m_dd = df_rets.rolling(window).apply(get_max_dd)
-# fig = plot_drawdown(df=df_m_dd[cols])
-# st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
-
-#################################
-
-# returns = np.log(weighted_average.div(weighted_average.shift(1))).fillna(0)
-
-# first_ap_day = str(df_storico["transaction_date"].min())[:10]
-
-# sr = sharpe_ratio(
-#     returns=returns,
-#     trading_days=df_common_history.shape[0],
-#     risk_free_rate=get_risk_free_rate_history(decimal=True)
-#     .sort_index()
-#     .loc[first_ap_day:]
-#     .median()
-#     .values[0],
-# )
-
-# st.write(sr)
 
 write_disclaimer()
