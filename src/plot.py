@@ -75,10 +75,8 @@ def plot_wealth(df: pd.DataFrame) -> go.Figure:
 def plot_correlation_map(
     df: pd.DataFrame,
     enhance_correlation: Literal["positive", "null", "negative"],
-    lower_triangle_only: bool = False,
 ):
-    if lower_triangle_only:
-        mask = np.triu(np.ones_like(df, dtype=bool))
+    mask = np.triu(np.ones_like(df, dtype=bool), k=1)
 
     if enhance_correlation == "positive":
         cuts = [-1, 0, 1]
@@ -93,7 +91,7 @@ def plot_correlation_map(
 
     fig = go.Figure(
         go.Heatmap(
-            z=df.mask(mask) if lower_triangle_only else df,
+            z=df.mask(mask),
             x=df.columns,
             y=df.columns,
             colorscale=colorscale,
@@ -142,10 +140,39 @@ def plot_returns(
     return fig
 
 
-def plot_drawdown(df: pd.DataFrame) -> go.Figure:
-    fig = px.area(data_frame=df)
+def plot_rolling_returns(df_roll_ret: pd.DataFrame, window: int) -> go.Figure:
+    fig = px.area(df_roll_ret.replace(0, np.nan).dropna())
     fig.update_traces(
-        hovertemplate="%{x}: <b>%{y:.1%}</b>", stackgroup=None, fill="tozeroy"
+        hovertemplate="%{x}: <b>%{y:.1%}</b>",
+        stackgroup=None,
+        fill="tozeroy",
+    )
+    fig.update_layout(
+        autosize=False,
+        height=600,
+        margin=dict(l=0, r=0, t=25, b=0),
+        legend=dict(title=""),
+        yaxis=dict(title="Rolling return", showgrid=False, tickformat=".1%"),
+        xaxis=dict(title=""),
+    )
+    fig.add_annotation(
+        xref="x domain",
+        yref="y domain",
+        x=0.01,
+        y=1.01,
+        text=f"<b>{window}-trading-day</b> rolling returns",
+        font_size=15,
+        showarrow=False,
+    )
+    return fig
+
+
+def plot_drawdown(df: pd.DataFrame) -> go.Figure:
+    fig = px.area(data_frame=df.dropna())
+    fig.update_traces(
+        hovertemplate="%{x}: <b>%{y:.1%}</b>",
+        stackgroup=None,
+        fill="tozeroy",
     )
     fig.update_layout(
         autosize=False,
