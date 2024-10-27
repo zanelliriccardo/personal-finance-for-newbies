@@ -1,5 +1,9 @@
 import streamlit as st
 
+from input_output import write_disclaimer, get_max_common_history
+from risk import get_drawdown, get_max_dd
+from returns import get_period_returns
+from plot import plot_correlation_map, plot_returns, plot_drawdown
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -8,15 +12,6 @@ from var import (
     DICT_FREQ_RESAMPLE,
     PLT_CONFIG,
 )
-
-from utils import (
-    get_max_common_history,
-    write_disclaimer,
-    get_period_returns,
-    get_drawdown,
-    get_max_dd,
-)
-from plot import plot_correlation_map, plot_returns, plot_drawdown
 
 st.set_page_config(
     page_title="PFN | Advanced Stats",
@@ -50,9 +45,9 @@ level = col_l_up.radio(
 )
 freq = col_r_up.radio(
     label="Frequency of returns:",
-    options=["Quarter", "Month", "Week", "Day"],
+    options=["Month", "Week", "Day"],
     horizontal=True,
-    index=3,
+    index=2,
     key="freq",
 )
 
@@ -87,6 +82,15 @@ df_rets = get_period_returns(
     period=DICT_FREQ_RESAMPLE[freq],
     level=DICT_GROUPBY_LEVELS[level],
 )
+
+# import plotly.express as px
+# from utils import get_rolling_returns
+
+# df = df_common_history.loc[first_day:last_day, :].ffill()
+# df_rr = get_rolling_returns(df, 60)
+
+# # st.write(df_rr)
+# st.plotly_chart(px.line(df_rr[["LCWD.MI", "SGLD.MI"]]))
 
 fig = plot_correlation_map(
     df=df_rets.corr(),

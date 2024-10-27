@@ -7,13 +7,12 @@ from var import (
     FAVICON,
     DICT_GROUPBY_LEVELS,
 )
-from utils import (
+from input_output import write_disclaimer, get_last_closing_price
+from aggregation import (
     aggregate_by_ticker,
-    get_last_closing_price,
-    get_wealth_history,
-    get_portfolio_pivot,
     get_pnl_by_asset_class,
-    write_disclaimer,
+    get_portfolio_pivot,
+    get_wealth_history,
 )
 from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class
 

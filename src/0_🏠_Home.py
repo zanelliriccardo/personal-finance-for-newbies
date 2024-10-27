@@ -2,7 +2,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from utils import load_data, write_disclaimer
+from input_output import load_data, write_disclaimer
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     DATA_PATH,
