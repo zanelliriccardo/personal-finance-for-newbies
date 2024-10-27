@@ -49,7 +49,28 @@ def get_period_returns(
             return df_rets_classes
 
 
-def get_rolling_returns(df_prices: pd.DataFrame, window: int) -> pd.DataFrame:
+def get_rolling_returns(
+    df_prices: pd.DataFrame,
+    df_registry: pd.DataFrame,
+    window: int,
+    level: Literal["ticker", "asset_class", "macro_asset_class"],
+) -> pd.DataFrame:
+
     df_log_ret = np.log(df_prices.div(df_prices.shift(1)))
     df_roll_log_ret = df_log_ret.rolling(window=window).sum()
-    return np.exp(df_roll_log_ret) - 1
+    df_roll_ret = np.exp(df_roll_log_ret) - 1
+
+    # Se il livello è quello del ticker, non devo fare altro
+    if level == "ticker":
+        return df_roll_ret
+    # Altrimenti aggrego al livello richiesto
+    else:
+        classes = df_registry[level].unique()
+        df_roll_ret_classes = pd.DataFrame(columns=classes)
+        for class_ in classes:
+            cols_to_sum = df_registry[df_registry[level].eq(class_)][
+                "ticker_yf"
+            ].to_list()
+
+            df_roll_ret_classes[class_] = df_roll_ret[cols_to_sum].sum(axis=1)
+        return df_roll_ret_classes
