@@ -17,7 +17,7 @@ from aggregation import (
 from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class
 
 st.set_page_config(
-    page_title="PFN | Basic Stats",
+    page_title="PFN | Asset Allocation & PnL",
     page_icon=FAVICON,
     layout="wide",
     initial_sidebar_state="auto",

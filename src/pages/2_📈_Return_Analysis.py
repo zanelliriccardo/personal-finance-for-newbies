@@ -14,7 +14,7 @@ from var import (
 )
 
 st.set_page_config(
-    page_title="PFN | Advanced Stats",
+    page_title="PFN | Return Analysis",
     page_icon=FAVICON,
     layout="wide",
     initial_sidebar_state="auto",
