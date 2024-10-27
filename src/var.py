@@ -14,6 +14,7 @@ APP_VERSION = "0.2.0"
 
 DATA_PATH = Path(assets_path, "data", "in")
 FAVICON = Image.open(Path(assets_path, "images", "piggybank.ico"))
+COVER = Image.open(Path(assets_path, "images", "cover_1.jpeg"))
 
 # Streamlit/Plotly vars
 
