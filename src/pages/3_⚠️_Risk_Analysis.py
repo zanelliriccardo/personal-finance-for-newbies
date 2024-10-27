@@ -82,7 +82,7 @@ cols = st.multiselect(
     f"Choose the {level.lower()} to display:",
     options=default_objs,
     default=default_objs[1],
-    key="sel_lev_2",
+    key="sel_lev_3",
 )
 
 if freq == "Day":
