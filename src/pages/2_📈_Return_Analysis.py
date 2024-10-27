@@ -1,8 +1,8 @@
 import streamlit as st
 
 from input_output import write_disclaimer, get_max_common_history
-from returns import get_period_returns
-from plot import plot_correlation_map, plot_returns
+from returns import get_period_returns, get_rolling_returns
+from plot import plot_correlation_map, plot_returns, plot_rolling_returns
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -72,6 +72,7 @@ st.markdown(f"## Correlation of {freq.lower().replace('day','dai')}ly returns")
 enhance_corr = st.radio(
     "Kind of correlation to enhance:",
     options=["Positive", "Null", "Negative"],
+    index=1,
     horizontal=True,
 )
 
@@ -82,19 +83,9 @@ df_rets = get_period_returns(
     level=DICT_GROUPBY_LEVELS[level],
 )
 
-# import plotly.express as px
-# from utils import get_rolling_returns
-
-# df = df_common_history.loc[first_day:last_day, :].ffill()
-# df_rr = get_rolling_returns(df, 60)
-
-# # st.write(df_rr)
-# st.plotly_chart(px.line(df_rr[["LCWD.MI", "SGLD.MI"]]))
-
 fig = plot_correlation_map(
     df=df_rets.corr(),
     enhance_correlation=enhance_corr.lower(),
-    lower_triangle_only=True,
 )
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
@@ -117,5 +108,36 @@ annotation_list = [
 
 fig = plot_returns(df=df_rets[cols], annotation_text="<br>".join(annotation_list))
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+st.markdown("***")
+
+st.markdown("## Rolling returns")
+
+col_l_lw, col_r_lw = st.columns([1.3, 1], gap="large")
+
+cols = col_l_lw.multiselect(
+    f"Choose the {level.lower()} to display:",
+    options=default_objs,
+    default=default_objs[1],
+    key="sel_lev_2",
+)
+
+window = col_r_lw.slider(
+    "Choose a rolling window:",
+    min_value=1,
+    max_value=df_common_history.loc[first_day:last_day, :].shape[0] - 2,
+    value=30,
+)
+
+df_roll_ret = get_rolling_returns(
+    df_prices=df_common_history.loc[first_day:last_day, :].ffill(),
+    df_registry=df_registry,
+    level=DICT_GROUPBY_LEVELS[level],
+    window=window,
+)[cols]
+
+fig = plot_rolling_returns(df_roll_ret, window)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+# TODO add start and end period in hover
 
 write_disclaimer()
