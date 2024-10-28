@@ -1,18 +1,34 @@
 # Personal Finance for Newbies (PFN)
 
-## What is that?
-A web app that, from a file of (buy/sell) financial asset transactions, produces near real-time statistics (updated to the last closing) on your investment portfolio
+## Table of Contents
+
+- [What is it?](#what-is-it)
+
+- [How can I run it?](#how-can-i-run-it)
+
+- [How can I use my own data?](#how-can-i-use-my-own-data)
+
+- [How can I help?](#how-can-i-help)
+
+## What is it?
+**Personal Finance for Newbies** (or **PFN**) is a web app that – from buy/sell financial asset transactions – provides easy-to-use, near-real-time statistics (*i.e.*, updated to the last closing) on your investment portfolio.
+<br><br>
+PFN allows you to analyse your portfolio from **multiple perspectives**: from **higher-level metrics** (profit & loss, asset class weights) to those allowing you to study **risk** and **returns** in depth, especially over time. To use the app, you don't need to create an account! You just need to set up your buy/sell transactions: PFN takes care of downloading historical prices from [Yahoo Finance](https://finance.yahoo.com/) and analysing them for you!
+<br><br>
+We do not collect or store any data. Nor do we provide any guarantee of the accuracy
+of the results displayed, which are intended for educational and informational
+purposes only.
 
 ## How can I run it?
 
 ### Streamlit
-Install dependencies via poetry
+Install **dependencies** via [poetry](https://python-poetry.org/docs/) with
 
 - `poetry install`
 
-Launch the app
+Launch the **web app** via
 
-- `streamlit run 0_🏠_Home.py`
+- `streamlit run ./src/0_🏠_Home.py`
 
 ### Docker
 To build the app's docker image
@@ -28,8 +44,7 @@ To run the docker image using the host's network (which will make the app access
 - `docker run --network host personal-finance-for-newbies`
 
 ## How can I use my own data?
-To load and use your data, download and fill in the template with your accumulation plan's buy/sell transactions and upload it.
-Make sure you fill it in correctly. The fields to be entered are:
+To load and use your data, download and fill in the template with your accumulation plan's buy/sell transactions and upload it. Make sure you fill it in correctly. The fields to be entered are:
 
 - **Exchange**: name of the market (according to Yahoo Finance) [list of exchange suffixes](https://help.yahoo.com/kb/SLN2310.html);
 - **Ticker**: symbol to identify a publicly traded security;
@@ -40,17 +55,22 @@ Make sure you fill it in correctly. The fields to be entered are:
 
 ## How can I help?
 
-### To-Do list
-We always look for pull requests, if you know better!
-Here's an hopefully up-to-date list of things to build:
-- Correlation map between assets
+Contributions are what make the open source community an amazing place to learn, inspire, and create. Any contribution you make is **greatly appreciated**.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature_amazing_feature`)
+3. Commit your Changes (`git commit -m 'Add some amazing stuff'`)
+4. Push to the Branch (`git push origin feature_amazing_feature`)
+5. Open a Pull Request
+
+Here's an hopefully up-to-date **list of things to build**:
 - Improve Sharpe Ratio calculation, to take into account a time-varying:
     - risk-free rate
     - asset allocation
 - Rolling Sharpe ratio chart
-- Max Drawdown evaluation
 - Sortino and Calmar ratios
-- Time slicing (1yr, 3yrs, 5yrs, ..., All) as a global filter
 - Docker compose, with these services:
     - `jupyter notebook` for prototyping
     - `streamlit` to launch the web-app
