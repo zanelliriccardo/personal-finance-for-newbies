@@ -47,16 +47,19 @@ col_l.image(COVER)
 
 st.markdown("***")
 
-st.markdown("## Let's get started")
+st.markdown("## What assets do you have in your portfolio?")
 st.markdown(
-    "To load your data, fill in the template with your accumulation plan's buy/sell transactions and upload it here:",
+    """
+    To get started, upload your data, filling in the template with the buy/sell
+    transactions of your accumulation plan. Instructions can be found within
+    the template itself.
+    """,
     unsafe_allow_html=True,
 )
-col_l, col_r = st.columns([1, 0.8], gap="small")
+col_l, col_r = st.columns([0.8, 1], gap="small")
 
 uploaded_file = col_l.file_uploader(
-    label="Upload your Data",
-    label_visibility="collapsed",
+    label="Upload your Data", label_visibility="collapsed", accept_multiple_files=False
 )
 if uploaded_file is not None:
     try:
@@ -65,32 +68,55 @@ if uploaded_file is not None:
         st.session_state["dimensions"] = df_anagrafica
     except:
         st.error("Please check your file format and make sure it matches the template")
-        st.stop()
 
 with open(DATA_PATH / Path("template.xlsx"), "rb") as f:
     col_l.download_button(
         "Download Template",
+        icon="📑",
         data=f,
         file_name="template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
-st.markdown("##")
+st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
-    "If you wish to **explore** the app first, load some **demo data** instead:",
+    "If you wish to explore the app first, load some **demo** data instead.",
     unsafe_allow_html=True,
 )
 
-if st.button(label="Load Mock Data", key="load_mock_df"):
+if st.button(label="Load Mock Data", icon="📊", key="load_mock_df"):
     df_storico, df_anagrafica = load_data(DATA_PATH / Path("demo.xlsx"))
     st.session_state["data"] = df_storico
     st.session_state["dimensions"] = df_anagrafica
-    st.switch_page("pages/1_🎯_Asset_Allocation_&_PnL.py")
 
-# st.page_link(
-#     "pages/1_🎯_Asset_Allocation_&_PnL.py", label="Asset Allocation & PnL", icon="🎯"
-# )
+st.markdown("***")
 
-# TODO add links with short descriptions
+st.markdown("## How do I analyse my portfolio?")
+
+st.markdown(
+    """
+    Once you have the data in place, you can explore the different sections
+    of the app. On the first page you can study the current portfolio composition,
+    the PnL by asset class, and the evolution (since inception of the accumulation
+    plan) of your wealth. On the second page you can investigate the correlations
+    of returns, their distributions, as well as rolling returns. Finally, the last
+    page allows you to visualise portfolio risk in terms of drawdowns.
+    """,
+    unsafe_allow_html=True,
+)
+col_l_l, col_l_m, col_l_r = st.columns([1, 1, 1], gap="large")
+col_l_l.page_link(
+    "pages/1_🎯_Asset_Allocation_&_PnL.py", label="Asset Allocation & PnL", icon="🎯"
+)
+col_l_m.page_link("pages/2_📈_Return_Analysis.py", label="Return Analysis", icon="📈")
+col_l_r.page_link("pages/3_⚠️_Risk_Analysis.py", label="Risk Analysis", icon="⚠️")
+
+st.markdown(
+    """
+    👉🏻 Keep in mind that this app is constantly evolving, which means that new
+    features and/or new sections may pop up!
+    """,
+    unsafe_allow_html=True,
+)
 
 write_disclaimer()
