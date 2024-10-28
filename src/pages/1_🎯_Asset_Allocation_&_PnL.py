@@ -79,7 +79,7 @@ st.markdown("## Current Portfolio Asset Allocation")
 fig = plot_sunburst(df=df_pivot)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
-with st.expander("Show pivot table"):
+with st.expander("Show me a table"):
     group_by = st.radio(
         label="Aggregate by:",
         options=["Macro Asset Classes", "Asset Classes", "Tickers"],
