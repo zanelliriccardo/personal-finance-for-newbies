@@ -1,5 +1,8 @@
 import streamlit as st
 
+from input_output import write_disclaimer, get_max_common_history
+from returns import get_period_returns, get_rolling_returns
+from plot import plot_correlation_map, plot_returns, plot_rolling_returns
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -9,17 +12,8 @@ from var import (
     PLT_CONFIG,
 )
 
-from utils import (
-    get_max_common_history,
-    write_disclaimer,
-    get_period_returns,
-    get_drawdown,
-    get_max_dd,
-)
-from plot import plot_correlation_map, plot_returns, plot_drawdown
-
 st.set_page_config(
-    page_title="PFN | Advanced Stats",
+    page_title="PFN | Return Analysis",
     page_icon=FAVICON,
     layout="wide",
     initial_sidebar_state="auto",
@@ -50,9 +44,9 @@ level = col_l_up.radio(
 )
 freq = col_r_up.radio(
     label="Frequency of returns:",
-    options=["Quarter", "Month", "Week", "Day"],
+    options=["Month", "Week", "Day"],
     horizontal=True,
-    index=3,
+    index=2,
     key="freq",
 )
 
@@ -78,6 +72,7 @@ st.markdown(f"## Correlation of {freq.lower().replace('day','dai')}ly returns")
 enhance_corr = st.radio(
     "Kind of correlation to enhance:",
     options=["Positive", "Null", "Negative"],
+    index=1,
     horizontal=True,
 )
 
@@ -91,7 +86,6 @@ df_rets = get_period_returns(
 fig = plot_correlation_map(
     df=df_rets.corr(),
     enhance_correlation=enhance_corr.lower(),
-    lower_triangle_only=True,
 )
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
@@ -117,58 +111,33 @@ st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 
 st.markdown("***")
 
-st.markdown(f"## Drawdown in {freq.lower().replace('day','dai')}ly returns")
+st.markdown("## Rolling returns")
 
-cols = st.multiselect(
+col_l_lw, col_r_lw = st.columns([1.3, 1], gap="large")
+
+cols = col_l_lw.multiselect(
     f"Choose the {level.lower()} to display:",
     options=default_objs,
     default=default_objs[1],
     key="sel_lev_2",
 )
 
-if freq == "Day":
-    window = st.radio(
-        "Specify a rolling time window:",
-        options=[
-            "No window (whole time span)",
-            "1 month (21 days)",
-            "3 months (63 days)",
-        ],
-        horizontal=True,
-    )
-    if window == "No window (whole time span)":
-        df_dd = get_drawdown(df_rets[cols])
-    elif window == "3 months (63 days)":
-        df_dd = df_rets[cols].rolling(window=63).apply(get_max_dd)
-    elif window == "1 month (21 days)":
-        df_dd = df_rets[cols].rolling(window=21).apply(get_max_dd)
-else:
-    df_dd = get_drawdown(df_rets[cols])
+window = col_r_lw.slider(
+    "Choose a rolling window:",
+    min_value=1,
+    max_value=df_common_history.loc[first_day:last_day, :].shape[0] - 2,
+    value=30,
+)
 
-fig = plot_drawdown(df=df_dd)
+df_roll_ret = get_rolling_returns(
+    df_prices=df_common_history.loc[first_day:last_day, :].ffill(),
+    df_registry=df_registry,
+    level=DICT_GROUPBY_LEVELS[level],
+    window=window,
+)[cols]
+
+fig = plot_rolling_returns(df_roll_ret, window)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
-
-# window = 30
-# df_m_dd = df_rets.rolling(window).apply(get_max_dd)
-# fig = plot_drawdown(df=df_m_dd[cols])
-# st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
-
-#################################
-
-# returns = np.log(weighted_average.div(weighted_average.shift(1))).fillna(0)
-
-# first_ap_day = str(df_storico["transaction_date"].min())[:10]
-
-# sr = sharpe_ratio(
-#     returns=returns,
-#     trading_days=df_common_history.shape[0],
-#     risk_free_rate=get_risk_free_rate_history(decimal=True)
-#     .sort_index()
-#     .loc[first_ap_day:]
-#     .median()
-#     .values[0],
-# )
-
-# st.write(sr)
+# TODO add start and end period in hover
 
 write_disclaimer()

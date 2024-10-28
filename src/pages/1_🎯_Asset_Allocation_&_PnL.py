@@ -7,19 +7,17 @@ from var import (
     FAVICON,
     DICT_GROUPBY_LEVELS,
 )
-from utils import (
+from input_output import write_disclaimer, get_last_closing_price
+from aggregation import (
     aggregate_by_ticker,
-    get_last_closing_price,
-    get_max_common_history,
-    get_wealth_history,
-    get_portfolio_pivot,
     get_pnl_by_asset_class,
-    write_disclaimer,
+    get_portfolio_pivot,
+    get_wealth_history,
 )
 from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class
 
 st.set_page_config(
-    page_title="PFN | Basic Stats",
+    page_title="PFN | Asset Allocation & PnL",
     page_icon=FAVICON,
     layout="wide",
     initial_sidebar_state="auto",
@@ -81,7 +79,7 @@ st.markdown("## Current Portfolio Asset Allocation")
 fig = plot_sunburst(df=df_pivot)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
-with st.expander("Show pivot table"):
+with st.expander("Show me a table"):
     group_by = st.radio(
         label="Aggregate by:",
         options=["Macro Asset Classes", "Asset Classes", "Tickers"],
