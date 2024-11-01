@@ -9,7 +9,7 @@ assets_path = str(
     os.path.join(*split_script_running_path[0 : len(split_script_running_path) - 1])
 )
 
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.2.1"
 
 # Data/images
 
