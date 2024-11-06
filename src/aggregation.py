@@ -114,10 +114,8 @@ def get_portfolio_pivot(
         .sum()
         .reset_index()
     )
-    df_pivot["weight_pf"] = (
-        (100 * df_pivot["position_value"].div(pf_actual_value)).astype(float).round(1)
-    )
-    df_pivot["position_value"] = df_pivot["position_value"].astype(float).round(1)
+    df_pivot["weight_pf"] = 100 * df_pivot["position_value"].div(pf_actual_value)
+    df_pivot["position_value"] = df_pivot["position_value"]
     return df_pivot
 
 
@@ -128,8 +126,6 @@ def get_pnl_by_asset_class(
     group_by: Literal["asset_class", "macro_asset_class"],
 ) -> pd.DataFrame:
     df_pnl = df.merge(df_dimensions, how="left", on="ticker_yf")
-    df_pnl["pnl"] = np.round(
-        ((df_pnl["price"] - df_pnl["dca"]) * df_pnl["shares"]).astype(float), 1
-    )
+    df_pnl["pnl"] = ((df_pnl["price"] - df_pnl["dca"]) * df_pnl["shares"]).astype(float)
     df_pnl = df_pnl.groupby(group_by)["pnl"].sum().reset_index().sort_values([group_by])
     return df_pnl
