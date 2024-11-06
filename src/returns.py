@@ -11,9 +11,12 @@ from var import CACHE_EXPIRE_SECONDS
 def get_period_returns(
     df: pd.DataFrame,
     df_registry: pd.DataFrame,
+    tickers_to_evaluate: list[str],
     period: Literal["Y", "Q", "M", "W", None],
     level: Literal["ticker", "asset_class", "macro_asset_class"],
 ):
+    # Filtra solo i ticker effettivamente in portafoglio
+    df_registry = df_registry[df_registry["ticker_yf"].isin(tickers_to_evaluate)]
     # Calcolo il ritorno
     df_rets = df.pct_change()[1:]
     # Se il periodo è None, la frequenza è giornaliera
@@ -29,7 +32,6 @@ def get_period_returns(
                 cols_to_sum = df_registry[df_registry[level].eq(class_)][
                     "ticker_yf"
                 ].to_list()
-
                 df_rets_classes[class_] = df_rets[cols_to_sum].sum(axis=1)
             return df_rets_classes
     # Se il periodo non è None, faccio resampling al periodo desiderato
@@ -52,9 +54,12 @@ def get_period_returns(
 def get_rolling_returns(
     df_prices: pd.DataFrame,
     df_registry: pd.DataFrame,
+    tickers_to_evaluate: list[str],
     window: int,
     level: Literal["ticker", "asset_class", "macro_asset_class"],
 ) -> pd.DataFrame:
+    # Filtra solo i ticker effettivamente in portafoglio
+    df_registry = df_registry[df_registry["ticker_yf"].isin(tickers_to_evaluate)]
 
     df_log_ret = np.log(df_prices.div(df_prices.shift(1)))
     df_roll_log_ret = df_log_ret.rolling(window=window).sum()

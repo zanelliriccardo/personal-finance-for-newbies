@@ -40,7 +40,7 @@ def plot_pnl_by_asset_class(
             hoverinfo="skip",
         )
     )
-    fig.update_traces(texttemplate="%{y:.1f}")
+    fig.update_traces(texttemplate="%{y:,.1f} €")
     fig.update_layout(
         autosize=False,
         height=550,

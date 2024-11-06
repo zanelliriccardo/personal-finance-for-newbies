@@ -51,18 +51,15 @@ col_l, col_r = st.columns([1, 1], gap="small")
 consider_fees = st.checkbox("Take fees into account")
 
 pf_actual_value = (df_j["shares"] * df_j["price"]).sum()
-if consider_fees:
-    pnl = pf_actual_value - expense - fees
-    pnl_perc = 100 * (pf_actual_value - expense - fees) / expense
-else:
-    pnl = pf_actual_value - expense
-    pnl_perc = 100 * (pf_actual_value - expense) / expense
+total_expense = expense + fees if consider_fees else expense
+pnl = pf_actual_value - total_expense
+pnl_perc = 100 * pnl / total_expense
 sign = "+" if pnl >= 0 else ""
 
 col_l.metric(
     label="Actual Portfolio Value",
-    value=f"{pf_actual_value: .1f} €",
-    delta=f"{pnl: .1f} € ({sign}{pnl_perc: .1f}%)",
+    value=f"{pf_actual_value: ,.1f} €",
+    delta=f"{pnl: ,.1f} € ({sign}{pnl_perc: .1f}%)",
 )
 
 df_j["position_value"] = df_j["shares"] * df_j["price"]
@@ -83,6 +80,7 @@ with st.expander("Show me a table"):
     group_by = st.radio(
         label="Aggregate by:",
         options=["Macro Asset Classes", "Asset Classes", "Tickers"],
+        index=1,
         horizontal=True,
     )
     df_pivot_ = get_portfolio_pivot(
@@ -91,18 +89,24 @@ with st.expander("Show me a table"):
         pf_actual_value=pf_actual_value,
         aggregation_level=DICT_GROUPBY_LEVELS[group_by],
     )
-    df_pivot_.index += 1
-    st.table(
+    st.dataframe(
         df_pivot_.rename(
             columns={
                 "macro_asset_class": "Macro Asset Class",
                 "asset_class": "Asset Class",
                 "ticker_yf": "Ticker",
                 "name": "Name",
-                "position_value": "Position Value (€)",
-                "weight_pf": "Weight (%)",
+                "position_value": "Position Value",
+                "weight_pf": "Weight",
             }
-        ).style.format(precision=1)
+        ).style.format(
+            {
+                "Position Value": "{:,.1f} €",
+                "Weight": "{:,.1f}%",
+            }
+        ),
+        use_container_width=True,
+        hide_index=True,
     )
 
 st.markdown("***")

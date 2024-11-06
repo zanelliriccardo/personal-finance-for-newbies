@@ -29,7 +29,12 @@ else:
     st.error("Oops... there's nothing to display. Go through 🏠 first to load the data")
     st.stop()
 
-ticker_list = df_transactions["ticker_yf"].unique().tolist()
+df_n_shares = (
+    df_transactions.groupby("ticker_yf")
+    .agg(n_shares=("shares", "sum"))
+    .sort_values("n_shares", ascending=False)
+)
+ticker_list = df_n_shares.loc[~(df_n_shares == 0).all(axis=1)].index.unique().to_list()
 df_common_history = get_max_common_history(ticker_list=ticker_list)
 
 st.markdown("## Global settings")
@@ -73,6 +78,7 @@ st.markdown(f"## Drawdown in {freq.lower().replace('day','dai')}ly returns")
 df_rets = get_period_returns(
     df=df_common_history.loc[first_day:last_day, :],
     df_registry=df_registry,
+    tickers_to_evaluate=ticker_list,
     period=DICT_FREQ_RESAMPLE[freq],
     level=DICT_GROUPBY_LEVELS[level],
 )
@@ -81,7 +87,7 @@ default_objs = df_rets.columns.to_list()
 cols = st.multiselect(
     f"Choose the {level.lower()} to display:",
     options=default_objs,
-    default=default_objs[1],
+    default=default_objs[0],
     key="sel_lev_3",
 )
 
