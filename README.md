@@ -37,11 +37,11 @@ To build the app's docker image
 
 To run the docker image and expose it on a preferred port (for example 8080)
 
-- `docker run -p 8080:8501 personal-finance-for-newbies`
+- `docker run --rm -p 8080:8501 personal-finance-for-newbies`
 
 To run the docker image using the host's network (which will make the app accessible on port 8501)
 
-- `docker run --network host personal-finance-for-newbies`
+- `docker run --rm --network host personal-finance-for-newbies`
 
 ## How can I use my own data?
 To load and use your data, download and fill in the template with your accumulation plan's buy/sell transactions and upload it. Make sure you fill it in correctly. The fields to be entered are:
