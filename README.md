@@ -15,9 +15,14 @@
 <br><br>
 PFN allows you to analyse your portfolio from **multiple perspectives**: from **higher-level metrics** (profit & loss, asset class weights) to those allowing you to study **risk** and **returns** in depth, especially over time. To use the app, you don't need to create an account! You just need to set up your buy/sell transactions: PFN takes care of downloading historical prices from [Yahoo Finance](https://finance.yahoo.com/) and analysing them for you!
 <br><br>
-We do not collect or store any data. Nor do we provide any guarantee of the accuracy
-of the results displayed, which are intended for educational and informational
-purposes only.
+<center><sub><sup>
+We do not collect or store any data. We provide no guarantee, explicit or implicit, as to the accuracy of the results displayed, which are intended for educational and informational purposes only.
+</sup></sub></center>
+<br>
+
+| ![PFN at play amidst a vivid dawn](images/cover_2.jpeg) | 
+|:--:| 
+| *Generated image of PFN at play amidst a vivid dawn* |
 
 ## How can I run it?
 
@@ -31,17 +36,21 @@ Launch the **web app** via
 - `streamlit run ./src/0_🏠_Home.py`
 
 ### Docker
-To build the app's docker image
+To build the app's Docker image
 
 - `docker build -t personal-finance-for-newbies .`
 
-To run the docker image and expose it on a preferred port (for example 8080)
+To run the Docker image and expose it on a preferred port (for example 8080)
 
 - `docker run --rm -p 8080:8501 personal-finance-for-newbies`
 
-To run the docker image using the host's network (which will make the app accessible on port 8501)
+To run the Docker image using the host's network (which will make the app accessible on port 8501)
 
 - `docker run --rm --network host personal-finance-for-newbies`
+
+Alternatively, on Windows you simply launch
+
+- `scripts/run-web-app.ps1`
 
 ## How can I use my own data?
 To load and use your data, download and fill in the template with your accumulation plan's buy/sell transactions and upload it. Make sure you fill it in correctly. The fields to be entered are:
