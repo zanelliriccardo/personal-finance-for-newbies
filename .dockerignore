@@ -1,3 +1,6 @@
+.venv/
+.vscode/
+jupyters/
 README.md
 LICENSE
 Dockerfile
