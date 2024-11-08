@@ -2,11 +2,13 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY . . 
+RUN pip install poetry==1.5.1
 
-RUN pip3 install poetry==v1.5.1
+COPY pyproject.toml poetry.lock ./
 
 RUN poetry install --no-root
+
+COPY . .
 
 EXPOSE 8501
 
