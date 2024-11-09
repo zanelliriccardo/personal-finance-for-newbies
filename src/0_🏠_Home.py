@@ -137,7 +137,7 @@ col_l_r.page_link(
     "pages/3_⚠️_Risk_Analysis.py",
     label="Risk Analysis",
     icon="⚠️",
-    help="Portfolio drawdons",
+    help="Portfolio drawdowns",
 )
 
 st.markdown(
