@@ -50,7 +50,8 @@ col_l, col_r = st.columns([1, 1], gap="small")
 
 consider_fees = st.checkbox("Take fees into account")
 
-pf_actual_value = (df_j["shares"] * df_j["price"]).sum()
+df_j["position_value"] = df_j["shares"] * df_j["price"]
+pf_actual_value = df_j["position_value"].sum()
 total_expense = expense + fees if consider_fees else expense
 pnl = pf_actual_value - total_expense
 pnl_perc = 100 * pnl / total_expense
@@ -62,7 +63,6 @@ col_l.metric(
     delta=f"{pnl: ,.1f} € ({sign}{pnl_perc: .1f}%)",
 )
 
-df_j["position_value"] = df_j["shares"] * df_j["price"]
 df_pivot = get_portfolio_pivot(
     df=df_j,
     df_dimensions=df_anagrafica,

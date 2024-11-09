@@ -36,6 +36,7 @@ def write_load_message(df_data: pd.DataFrame, df_dimensions: pd.DataFrame) -> No
         st.error(
             f"There are null values: {n_data_na} among transactions, {n_dimensions_na} among tickers' descriptions"
         )
+        st.stop()
 
     if set_data_tickers != set_dimensions_tickers:
         st.warning(
@@ -152,7 +153,7 @@ def get_last_closing_price_from_api(ticker: str, days_of_delay: int = 5) -> List
 def get_full_price_history(ticker_list: List[str]) -> Dict:
     df_history = dict()
 
-    for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
+    for ticker_ in ticker_list:
         ticker_data = yf.Ticker(ticker_)
         df_history[ticker_] = ticker_data.history(
             period="max",
