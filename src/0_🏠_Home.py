@@ -3,7 +3,14 @@ from pathlib import Path
 import streamlit as st
 
 from input_output import load_data, write_disclaimer
-from var import GLOBAL_STREAMLIT_STYLE, DATA_PATH, FAVICON, APP_VERSION, COVER
+from var import (
+    GLOBAL_STREAMLIT_STYLE,
+    DATA_PATH,
+    FILE_UPLOADER_CSS,
+    FAVICON,
+    APP_VERSION,
+    COVER,
+)
 
 st.set_page_config(
     page_title="PFN",
@@ -56,17 +63,21 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-col_l, col_r = st.columns([0.8, 1], gap="small")
+col_l, col_r = st.columns([0.2, 0.95], gap="small")
 
-uploaded_file = col_l.file_uploader(
-    label="Upload your Data", label_visibility="collapsed", accept_multiple_files=False
+uploaded_file = col_r.file_uploader(
+    label="Upload your Data",
+    type=["xls", "xlsx", "xlsm", "xlsb", "odf", "ods"],
+    label_visibility="collapsed",
+    accept_multiple_files=False,
 )
+st.markdown(FILE_UPLOADER_CSS, unsafe_allow_html=True)
 if uploaded_file is not None:
     try:
         df_storico, df_anagrafica = load_data(uploaded_file)
         st.session_state["data"] = df_storico
         st.session_state["dimensions"] = df_anagrafica
-    except:
+    except ValueError:
         st.error("Please check your file format and make sure it matches the template")
 
 with open(DATA_PATH / Path("template.xlsx"), "rb") as f:
@@ -76,15 +87,20 @@ with open(DATA_PATH / Path("template.xlsx"), "rb") as f:
         data=f,
         file_name="template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        help="Fill in this template and upload it using the adjacent button",
     )
 
-st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
-    "If you wish to explore the app first, load some **demo** data instead.",
+    "<br>If you wish to explore the app first, load some **demo** data instead.",
     unsafe_allow_html=True,
 )
 
-if st.button(label="Load Mock Data", icon="📊", key="load_mock_df"):
+if st.button(
+    label="Load Mock Data",
+    icon="📊",
+    key="load_mock_df",
+    help="Load data to start a demo",
+):
     df_storico, df_anagrafica = load_data(DATA_PATH / Path("demo.xlsx"))
     st.session_state["data"] = df_storico
     st.session_state["dimensions"] = df_anagrafica
@@ -106,10 +122,23 @@ st.markdown(
 )
 col_l_l, col_l_m, col_l_r = st.columns([1, 1, 1], gap="large")
 col_l_l.page_link(
-    "pages/1_🎯_Asset_Allocation_&_PnL.py", label="Asset Allocation & PnL", icon="🎯"
+    "pages/1_🎯_Asset_Allocation_&_PnL.py",
+    label="Asset Allocation & PnL",
+    icon="🎯",
+    help="Portfolio composition, PnL, wealth evolution",
 )
-col_l_m.page_link("pages/2_📈_Return_Analysis.py", label="Return Analysis", icon="📈")
-col_l_r.page_link("pages/3_⚠️_Risk_Analysis.py", label="Risk Analysis", icon="⚠️")
+col_l_m.page_link(
+    "pages/2_📈_Return_Analysis.py",
+    label="Return Analysis",
+    icon="📈",
+    help="Distribution and correlation of returns, rolling returns",
+)
+col_l_r.page_link(
+    "pages/3_⚠️_Risk_Analysis.py",
+    label="Risk Analysis",
+    icon="⚠️",
+    help="Portfolio drawdons",
+)
 
 st.markdown(
     """

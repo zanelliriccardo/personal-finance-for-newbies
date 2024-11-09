@@ -20,12 +20,25 @@ COVER = Image.open(Path(assets_path, "images", f"cover_{randint(1,6)}.jpeg"))
 # Streamlit/Plotly vars
 
 GLOBAL_STREAMLIT_STYLE = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            .css-15zrgzn {display: none}
-            </style>
-            """
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        .css-15zrgzn {display: none}
+    </style>
+    """
+
+FILE_UPLOADER_CSS = """
+    <style>
+        [data-testid='stFileUploader'] section {
+            padding: 0;
+            float: left;
+        }
+        [data-testid='stFileUploader'] section > input + div {
+            display: none;
+        }
+    </style>
+    """
+
 
 PLT_CONFIG = {
     "displaylogo": False,
