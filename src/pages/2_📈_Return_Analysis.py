@@ -46,6 +46,7 @@ level = col_l_up.radio(
     horizontal=True,
     index=2,
     key="level",
+    help="Choose how to aggregate data for analysis: Tickers provides the most granular view, while Macro Asset Classes aggregates at the highest level",
 )
 freq = col_r_up.radio(
     label="Frequency of returns:",
@@ -75,7 +76,7 @@ st.markdown("***")
 st.markdown(f"## Correlation of {freq.lower().replace('day','dai')}ly returns")
 
 enhance_corr = st.radio(
-    "Kind of correlation to enhance:",
+    "Kind of correlation to highlight:",
     options=["Positive", "Null", "Negative"],
     index=1,
     horizontal=True,
