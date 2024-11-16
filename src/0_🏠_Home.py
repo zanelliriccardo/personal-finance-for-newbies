@@ -63,7 +63,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-col_l, col_r = st.columns([0.2, 0.95], gap="small")
+col_l, col_r = st.columns([0.25, 0.95], gap="small")
 
 uploaded_file = col_r.file_uploader(
     label="Upload your Data",
