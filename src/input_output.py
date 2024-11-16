@@ -88,6 +88,11 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
         df_anagrafica["ticker"] + "." + df_anagrafica["exchange"]
     )
 
+    # Drop columns not belonging to the excel tables
+    df_storico = df_storico.drop(
+        columns=[col_ for col_ in df_storico.columns if col_.startswith("Unnamed")]
+    )
+
     write_load_message(df_data=df_storico, df_dimensions=df_anagrafica)
     return df_storico, df_anagrafica
 
