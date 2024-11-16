@@ -17,7 +17,7 @@ def plot_sunburst(df: pd.DataFrame) -> go.Figure:
     fig.update_traces(hovertemplate="<b>%{value:.1f}%")
     fig.update_layout(
         autosize=False,
-        height=600,
+        height=620,
         margin=dict(l=0, r=0, t=20, b=20),
         hoverlabel_font_size=PLT_FONT_SIZE,
     )
@@ -56,17 +56,33 @@ def plot_wealth(df: pd.DataFrame) -> go.Figure:
         data_frame=df, x=df.index, y="ap_daily_value", custom_data=["diff_previous_day"]
     )
     fig.update_traces(
-        hovertemplate="%{x}: <b>%{y:,.0f}€</b> <extra>Gain/Loss on previous day: %{customdata:,.0f}€</extra>"
+        hovertemplate=(
+            "Portfolio value: <b>%{y:,.0f}€</b>"
+            "<extra>P&L vs previous day: %{customdata:,.0f}€</extra>"
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df["ap_cum_spent"],
+            mode="lines",
+            name="Cumulative Spent",
+            line=dict(dash="6px", width=1.5, color="bisque"),
+            customdata=df["ap_cum_pnl"],
+            hovertemplate=(
+                "Invested capital: <b>%{y:,.0f}€</b>"
+                "<extra>Ap-/De-preciation: %{customdata:,.0f}€</extra>"
+            ),
+        )
     )
     fig.update_layout(
         autosize=False,
         height=550,
         hoverlabel_font_size=PLT_FONT_SIZE,
+        hovermode="x",
         margin=dict(l=0, r=0, t=20, b=20),
         xaxis=dict(title=""),
-        yaxis=dict(
-            title="Daily value", showgrid=False, tickformat=",.0f", ticksuffix=" €"
-        ),
+        yaxis=dict(title="", showgrid=False, tickformat=",.0f", ticksuffix=" €"),
         showlegend=False,
     )
     return fig
