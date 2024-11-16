@@ -1,9 +1,9 @@
 import streamlit as st
 
 from input_output import write_disclaimer, get_max_common_history
-from risk import get_drawdown, get_max_dd
+from risk import get_drawdown, get_max_dd, get_portfolio_relative_risk_contribution
 from returns import get_period_returns
-from plot import plot_drawdown
+from plot import plot_drawdown, plot_relative_risk_contribution
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -113,6 +113,49 @@ else:
 
 fig = plot_drawdown(df=df_dd)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+st.markdown("***")
+
+st.markdown("## Relative risk contribution")
+
+df_rrc = get_portfolio_relative_risk_contribution(
+    df_prices=df_common_history.loc[first_day:last_day, :],
+    df_shares=df_n_shares,
+    df_registry=df_registry[df_registry["ticker_yf"].isin(ticker_list)],
+    level=DICT_GROUPBY_LEVELS[level],
+)
+
+st.markdown(
+    """
+The <b>relative risk contribution</b> $\widetilde{\mathcal{R}}_i$ from the $i$-th
+asset (or asset class) is the ratio of its risk contribution $\mathcal{R}_i$ to the
+total portfolio risk $\sigma$,
+""",
+    unsafe_allow_html=True,
+)
+st.latex(
+    r"""
+\widetilde{\mathcal{R}}_i \overset{\underset{\mathrm{def}}{}}{=}
+\frac{\mathcal{R}_i}{\sigma} = \frac{1}{\sigma}
+\left(w_i \frac{\partial \sigma}{\partial w_i} \right) =
+\frac{w_i (\Sigma \mathrm{w})_i}{\mathrm{w^T \Sigma w}},
+"""
+)
+st.markdown(
+    """
+where $\Sigma$ is the portfolio return covariance matrix and $\mathrm{w}$ are the
+portfolio weights. $\mathcal{R}_i$ can be interpreted as the weighted marginal
+risk contribution of the $i$-th asset: it measures the sensitivity of portfolio
+risk to the $i$-th asset weight. Understanding relative risk contributions
+$\widetilde{\mathcal{R}}_i$ proves useful for portfolio risk accounting.
+""",
+    unsafe_allow_html=True,
+)
+
+fig = plot_relative_risk_contribution(df_rrc)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+# TODO aggiungi i pesi oltre ai RRC_i nel plot
 
 write_disclaimer()
 
