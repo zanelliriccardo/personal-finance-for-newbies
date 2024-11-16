@@ -42,7 +42,7 @@ def aggregate_by_ticker(df: pd.DataFrame, in_pf_only: bool = False) -> pd.DataFr
 @st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_wealth_history(
     df_transactions: pd.DataFrame, ticker_list: list[str]
-) -> pd.Series:
+) -> pd.DataFrame:
     begin_date = df_transactions["transaction_date"].min()
     today = datetime.now().date()
     date_range = pd.date_range(start=begin_date, end=today, freq="D")
@@ -62,18 +62,19 @@ def get_wealth_history(
 
     df_transactions = df_transactions[df_transactions["ticker_yf"].isin(ticker_list)]
 
-    df_asset_allocation = pd.DataFrame(
-        index=date_range,
-        columns=ticker_list,
-        data=0,
-    )
+    df_asset_allocation = pd.DataFrame(index=date_range, columns=ticker_list, data=0)
+    df_cumulative_spent = pd.Series(index=date_range, data=0)
 
     for (data, ticker), group in df_transactions.groupby(
         ["transaction_date", "ticker_yf"]
     ):
         total_shares = group["shares"].sum()
+        total_spent = group["ap_amount"].sum()
         df_asset_allocation.loc[data, ticker] += total_shares
+        df_cumulative_spent.loc[data] += total_spent
+
     df_asset_allocation = df_asset_allocation.cumsum()
+    df_cumulative_spent = df_cumulative_spent.cumsum()
 
     df_wealth = pd.DataFrame(
         df_asset_allocation.multiply(df_prices.loc[begin_date:])
@@ -81,7 +82,9 @@ def get_wealth_history(
         .sum(axis=1)
         .rename("ap_daily_value")
     )
-    df_wealth["diff_previous_day"] = df_wealth.diff()
+    df_wealth["diff_previous_day"] = df_wealth["ap_daily_value"].diff()
+    df_wealth["ap_cum_spent"] = df_cumulative_spent
+    df_wealth["ap_cum_pnl"] = df_wealth["ap_daily_value"] - df_wealth["ap_cum_spent"]
 
     return df_wealth
 
