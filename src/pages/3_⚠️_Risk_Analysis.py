@@ -135,20 +135,27 @@ total portfolio risk $\sigma$,
 )
 st.latex(
     r"""
-\widetilde{\mathcal{R}}_i \overset{\underset{\mathrm{def}}{}}{=}
-\frac{\mathcal{R}_i}{\sigma} = \frac{1}{\sigma}
-\left(w_i \frac{\partial \sigma}{\partial w_i} \right) =
-\frac{w_i (\Sigma \mathrm{w})_i}{\mathrm{w^T \Sigma w}},
-"""
+    \widetilde{\mathcal{R}}_i \overset{\underset{\mathrm{def}}{}}{=}
+    \frac{\mathcal{R}_i}{\sigma} = \frac{1}{\sigma}
+    \left(w_i \frac{\partial \sigma}{\partial w_i} \right) =
+    \frac{w_i (\Sigma \mathrm{w})^i}{\mathrm{w^T \Sigma w}},
+    \text{ so that } \sum_{i=1}^n \widetilde{\mathcal{R}}_i = 1.
+    """
 )
 st.markdown(
-    """
-where $\Sigma$ is the portfolio return covariance matrix and $\mathrm{w}$ are the
-portfolio weights. $\mathcal{R}_i$ can be interpreted as the weighted marginal
-risk contribution of the $i$-th asset: it measures the sensitivity of portfolio
-risk to the $i$-th asset weight. Understanding relative risk contributions
-$\widetilde{\mathcal{R}}_i$ proves useful for portfolio risk accounting.
-""",
+    r"""
+    In the above definition:
+    - $\Sigma\in\mathbb{R}^{n \times n}$ is the portfolio return covariance matrix;
+    - $\mathrm{w}\in\mathbb{R}^n$ are the portfolio weights;
+    - $\mathcal{R}_i$ can be interpreted as the weighted marginal
+    risk contribution of the $i$-th asset: it measures the sensitivity of portfolio
+    risk to the $i$-th asset weight.
+    
+    Understanding relative risk contributions $\widetilde{\mathcal{R}}_i$ proves
+    useful for portfolio <b>risk accounting and management</b>. This is a kind of
+    dual representation, framed in the "risk space" (top chart) instead of the
+    "weight space" (bottom chart).
+    """,
     unsafe_allow_html=True,
 )
 
