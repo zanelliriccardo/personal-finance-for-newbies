@@ -204,13 +204,17 @@ def plot_drawdown(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def plot_relative_risk_contribution(df: pd.DataFrame) -> go.Figure:
+def plot_horizontal_bar(
+    df: pd.DataFrame, field_to_plot: str, xaxis_title: str = ""
+) -> go.Figure:
+    df_plt = df.copy()
+    df_plt[df_plt[field_to_plot].lt(0)] = 0
     fig = px.bar(
-        x=df,
-        y=[1] * df.shape[0],
+        x=df_plt[field_to_plot],
+        y=[1] * df_plt.shape[0],
         orientation="h",
-        color=df.index,
-        custom_data=[df.index],
+        color=df_plt.index,
+        custom_data=[df_plt.index],
         color_discrete_sequence=px.colors.qualitative.Safe,
     )
     fig.update_traces(
@@ -219,14 +223,14 @@ def plot_relative_risk_contribution(df: pd.DataFrame) -> go.Figure:
     )
     fig.update_layout(
         xaxis=dict(
-            title="Relative risk contribution",
+            title=xaxis_title,
             categoryorder="array",
-            categoryarray=df.index,
+            categoryarray=df_plt.index,
             tickformat=",.0%",
         ),
         yaxis=dict(title="", showticklabels=False),
         showlegend=False,
-        height=280,
+        height=250,
         margin=dict(l=0, r=0, t=30, b=0),
         hoverlabel_font_size=PLT_FONT_SIZE,
     )
