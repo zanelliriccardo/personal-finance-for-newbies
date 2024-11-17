@@ -3,7 +3,7 @@ import streamlit as st
 from input_output import write_disclaimer, get_max_common_history
 from risk import get_drawdown, get_max_dd, get_portfolio_relative_risk_contribution
 from returns import get_period_returns
-from plot import plot_drawdown, plot_relative_risk_contribution
+from plot import plot_drawdown, plot_horizontal_bar
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -118,13 +118,6 @@ st.markdown("***")
 
 st.markdown("## Relative risk contribution")
 
-df_rrc = get_portfolio_relative_risk_contribution(
-    df_prices=df_common_history.loc[first_day:last_day, :],
-    df_shares=df_n_shares,
-    df_registry=df_registry[df_registry["ticker_yf"].isin(ticker_list)],
-    level=DICT_GROUPBY_LEVELS[level],
-)
-
 st.markdown(
     """
 The <b>relative risk contribution</b> $\widetilde{\mathcal{R}}_i$ from the $i$-th
@@ -159,10 +152,37 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-fig = plot_relative_risk_contribution(df_rrc)
+order_by = st.radio(
+    "Sort bars by:",
+    options=[
+        "Relative risk contribution",
+        "Portfolio weight",
+    ],
+    horizontal=True,
+)
+
+order_by = (
+    "pf_weight" if order_by == "Portfolio weight" else "relative_risk_contribution"
+)
+
+df_rrc = get_portfolio_relative_risk_contribution(
+    df_prices=df_common_history.loc[first_day:last_day, :],
+    df_shares=df_n_shares,
+    df_registry=df_registry[df_registry["ticker_yf"].isin(ticker_list)],
+    level=DICT_GROUPBY_LEVELS[level],
+).sort_values(by=order_by, ascending=False)
+
+fig = plot_horizontal_bar(
+    df=df_rrc,
+    field_to_plot="relative_risk_contribution",
+    xaxis_title="Relative risk contribution",
+)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
-# TODO aggiungi i pesi oltre ai RRC_i nel plot
+fig = plot_horizontal_bar(
+    df=df_rrc, field_to_plot="pf_weight", xaxis_title="Portfolio weight"
+)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
 write_disclaimer()
 
