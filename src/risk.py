@@ -73,7 +73,7 @@ def get_portfolio_relative_risk_contribution(
         )
         df_weights.columns = ["last_price", "shares"]
         df_weights["total_invested"] = df_weights["last_price"] * df_weights["shares"]
-        df_weights["weight"] = df_weights["total_invested"].div(
+        df_weights["pf_weight"] = df_weights["total_invested"].div(
             df_weights["total_invested"].sum()
         )
     else:
@@ -97,12 +97,14 @@ def get_portfolio_relative_risk_contribution(
             df_.columns = ["last_price", "shares"]
             df_["total_invested"] = df_["last_price"] * df_["shares"]
             df_weights.loc[class_] = df_["total_invested"].sum()
-        df_weights["weight"] = df_weights["total_invested"].div(
+        df_weights["pf_weight"] = df_weights["total_invested"].div(
             df_weights["total_invested"].sum()
         )
 
-    return (
-        get_relative_risk_contributions(df_weights["weight"], df_rets)
-        .rename("relative_risk_contribution")
-        .sort_values(ascending=False)
-    )
+    df = pd.DataFrame(
+        get_relative_risk_contributions(df_weights["pf_weight"], df_rets).rename(
+            "relative_risk_contribution"
+        )
+    ).merge(df_weights["pf_weight"], right_index=True, left_index=True)
+
+    return df
