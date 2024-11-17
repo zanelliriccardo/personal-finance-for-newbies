@@ -116,7 +116,8 @@ st.markdown(
     the PnL by asset class, and the evolution (since inception of the accumulation
     plan) of your wealth. On the second page you can investigate the correlations
     of returns, their distributions, as well as rolling returns. Finally, the last
-    page allows you to visualise portfolio risk in terms of drawdowns.
+    page allows you to visualise portfolio risk in terms of drawdowns and relative
+    risk contributions.
     """,
     unsafe_allow_html=True,
 )
@@ -137,7 +138,7 @@ col_l_r.page_link(
     "pages/3_⚠️_Risk_Analysis.py",
     label="Risk Analysis",
     icon="⚠️",
-    help="Portfolio drawdowns",
+    help="Portfolio drawdowns, relative risk contributions",
 )
 
 st.markdown(

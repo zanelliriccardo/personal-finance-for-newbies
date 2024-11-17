@@ -1,9 +1,9 @@
 import streamlit as st
 
 from input_output import write_disclaimer, get_max_common_history
-from risk import get_drawdown, get_max_dd
+from risk import get_drawdown, get_max_dd, get_portfolio_relative_risk_contribution
 from returns import get_period_returns
-from plot import plot_drawdown
+from plot import plot_drawdown, plot_horizontal_bar
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -113,6 +113,76 @@ else:
 
 fig = plot_drawdown(df=df_dd)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+st.markdown("***")
+
+st.markdown("## Relative risk contribution")
+
+st.markdown(
+    """
+The <b>relative risk contribution</b> $\widetilde{\mathcal{R}}_i$ from the $i$-th
+asset (or asset class) is the ratio of its risk contribution $\mathcal{R}_i$ to the
+total portfolio risk $\sigma$,
+""",
+    unsafe_allow_html=True,
+)
+st.latex(
+    r"""
+    \widetilde{\mathcal{R}}_i \overset{\underset{\mathrm{def}}{}}{=}
+    \frac{\mathcal{R}_i}{\sigma} = \frac{1}{\sigma}
+    \left(w_i \frac{\partial \sigma}{\partial w_i} \right) =
+    \frac{w_i (\Sigma \mathrm{w})^i}{\mathrm{w^T \Sigma w}},
+    \text{ so that } \sum_{i=1}^n \widetilde{\mathcal{R}}_i = 1.
+    """
+)
+st.markdown(
+    r"""
+    In the above definition:
+    - $\Sigma\in\mathbb{R}^{n \times n}$ is the portfolio return covariance matrix;
+    - $\mathrm{w}\in\mathbb{R}^n$ are the portfolio weights;
+    - $\mathcal{R}_i$ can be interpreted as the weighted marginal
+    risk contribution of the $i$-th asset: it measures the sensitivity of portfolio
+    risk to the $i$-th asset weight.
+    
+    Understanding relative risk contributions $\widetilde{\mathcal{R}}_i$ proves
+    useful for portfolio <b>risk accounting and management</b>. This is a kind of
+    dual representation, framed in the "risk space" (top chart) instead of the
+    "weight space" (bottom chart).
+    """,
+    unsafe_allow_html=True,
+)
+
+order_by = st.radio(
+    "Sort bars by:",
+    options=[
+        "Relative risk contribution",
+        "Portfolio weight",
+    ],
+    horizontal=True,
+)
+
+order_by = (
+    "pf_weight" if order_by == "Portfolio weight" else "relative_risk_contribution"
+)
+
+df_rrc = get_portfolio_relative_risk_contribution(
+    df_prices=df_common_history.loc[first_day:last_day, :],
+    df_shares=df_n_shares,
+    df_registry=df_registry[df_registry["ticker_yf"].isin(ticker_list)],
+    level=DICT_GROUPBY_LEVELS[level],
+).sort_values(by=order_by, ascending=False)
+
+fig = plot_horizontal_bar(
+    df=df_rrc,
+    field_to_plot="relative_risk_contribution",
+    xaxis_title="Relative risk contribution",
+)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+fig = plot_horizontal_bar(
+    df=df_rrc, field_to_plot="pf_weight", xaxis_title="Portfolio weight"
+)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
 write_disclaimer()
 
