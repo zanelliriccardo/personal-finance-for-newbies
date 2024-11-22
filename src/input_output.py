@@ -56,7 +56,7 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
         dtype={
             "Exchange": str,
             "Ticker": str,
-            "Shares": int,
+            "Shares": float,
             "Price (€)": float,
             "Fees (€)": float,
         },
