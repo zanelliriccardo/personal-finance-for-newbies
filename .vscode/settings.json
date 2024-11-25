@@ -20,5 +20,5 @@
     "python.formatting.provider": "black",
     "python.linting.enabled": true,
     "workbench.colorTheme": "Night Owl",
-    "window.zoomLevel": 1,
+    "window.zoomLevel": 0,
 }

@@ -34,6 +34,10 @@ df_n_shares = (
     .sort_values("n_shares", ascending=False)
 )
 ticker_list = df_n_shares.loc[~(df_n_shares == 0).all(axis=1)].index.unique().to_list()
+
+#filter out tickers that start with ^
+ticker_list = [ticker for ticker in ticker_list if not ticker.startswith('^')]
+
 df_common_history = get_max_common_history(ticker_list=ticker_list)
 
 st.markdown("## Global settings")
@@ -82,6 +86,14 @@ enhance_corr = st.radio(
     horizontal=True,
 )
 
+coeff_corr = st.radio(
+    "Correlation coefficient:",
+    options=["Pearson", "Spearman", "Kendall"],
+    index=0,
+    horizontal=True,
+)
+
+
 df_rets = get_period_returns(
     df=df_common_history.loc[first_day:last_day, :],
     df_registry=df_registry,
@@ -91,7 +103,7 @@ df_rets = get_period_returns(
 )
 
 fig = plot_correlation_map(
-    df=df_rets.corr(),
+    df=df_rets.corr(method=coeff_corr.lower()),
     enhance_correlation=enhance_corr.lower(),
 )
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
@@ -109,7 +121,7 @@ cols = st.multiselect(
 )
 
 annotation_list = [
-    f"<b>{col_}</b> ⟶ excess kurtosis: {df_rets[col_].kurtosis().round(1)}, skewness: {df_rets[col_].skew().round(1)}"
+    f"<b>{col_}</b> ⟶ excess kurtosis: {round(df_rets[col_].kurtosis(), 1)}, skewness: {round(df_rets[col_].skew(), 1)}"
     for col_ in cols
 ]
 

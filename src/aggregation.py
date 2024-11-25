@@ -59,6 +59,7 @@ def get_wealth_history(
         .loc[begin_date:]
         .bfill()
     )
+    df_prices.to_excel("df_prices.xlsx")
 
     df_transactions = df_transactions[df_transactions["ticker_yf"].isin(ticker_list)]
 

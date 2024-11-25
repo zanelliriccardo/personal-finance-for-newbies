@@ -9,14 +9,15 @@ from var import (
     FAVICON,
     DICT_GROUPBY_LEVELS,
 )
-from input_output import write_disclaimer, get_last_closing_price
+from input_output import write_disclaimer, get_last_closing_price, get_summary
 from aggregation import (
     aggregate_by_ticker,
     get_pnl_by_asset_class,
     get_portfolio_pivot,
     get_wealth_history,
 )
-from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class
+from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class, plot_sector_allocation
+from sector import retrieve_sector
 
 st.set_page_config(
     page_title="PFN | Asset Allocation & PnL",
@@ -96,6 +97,43 @@ df_pivot = get_portfolio_pivot(
 
 st.markdown("***")
 
+st.markdown("## Summary")
+
+df_summary = get_summary(df_storico, df_anagrafica)
+
+# Set green color for positive values and red for negative ones in the "Gain/Loss" column
+st.dataframe(
+    df_summary.rename(
+        columns={
+            "ticker_yf": "Ticker",
+            "name": "Name",
+            "shares": "Shares",
+            "avg_shares_cost": "Average Cost",
+            "total_cost": "Total Cost",
+            "last_closing_price": "Last Closing Price",
+            "current_value": "Current Value",
+            "gain_loss": "Gain/Loss",
+            "gain_loss_perc": "Gain/Loss %",
+        }
+    ).style.format(
+        {
+            "Shares": "{:,.0f}",
+            "Average Cost": "{:,.2f} €",
+            "Total Cost": "{:,.2f} €",
+            "Last Closing Price": "{:,.2f} €",
+            "Current Value": "{:,.2f} €",
+            "Gain/Loss": "{:,.2f} €",
+            "Gain/Loss %": "{:,.2%}",
+        }
+    ).applymap(
+        lambda x: "color: green" if x > 0 else "color: red" if x < 0 else "color: black",
+        subset=["Gain/Loss", "Gain/Loss %"],
+    ),
+    use_container_width=True,
+    hide_index=True,
+)
+st.markdown("***")
+
 st.markdown("## Current portfolio asset allocation")
 fig = plot_sunburst(df=df_pivot)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
@@ -165,5 +203,18 @@ df_wealth = get_wealth_history(df_transactions=df_storico, ticker_list=ticker_li
 
 fig = plot_wealth(df=df_wealth)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+
+st.markdown("***")
+
+st.markdown("## Sector allocation for equities")
+
+#df_sector = retrieve_sector(df_anagrafica)
+#df_sector = df_sector[df_sector["macro_asset_class"] == "Equity"]
+#
+
+#fig = plot_sector_allocation(df_sector)
+#st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
 
 write_disclaimer()

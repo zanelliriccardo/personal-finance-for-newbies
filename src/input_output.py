@@ -48,7 +48,7 @@ def write_load_message(df_data: pd.DataFrame, df_dimensions: pd.DataFrame) -> No
     )
 
 
-@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+
 def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
     df_storico = pd.read_excel(
         full_path,
@@ -56,9 +56,10 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
         dtype={
             "Exchange": str,
             "Ticker": str,
-            "Shares": int,
+            "Shares": float,
             "Price (€)": float,
             "Fees (€)": float,
+            "Amount (€)": float,
         },
     ).rename(
         columns={
@@ -68,10 +69,17 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
             "Shares": "shares",
             "Price (€)": "price",
             "Fees (€)": "fees",
+            "Amount (€)": "ap_amount",
         }
     )
-    df_storico["ap_amount"] = df_storico["shares"] * df_storico["price"]
-    df_storico["ticker_yf"] = df_storico["ticker"] + "." + df_storico["exchange"]
+    # filter out tickers that start with ^
+    df_storico = df_storico[~df_storico["ticker"].str.startswith("^")]
+
+    df_storico['exchange'] = df_storico['exchange'].fillna('')
+    df_storico["ticker_yf"] = df_storico.apply(
+        lambda x: x["ticker"] + "." + x["exchange"] if x["exchange"] != '' else x["ticker"],
+        axis=1,
+    )
 
     df_anagrafica = pd.read_excel(
         full_path, sheet_name="Securities Master Table", dtype=str
@@ -84,27 +92,36 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
             "Macro Asset Class": "macro_asset_class",
         }
     )
-    df_anagrafica["ticker_yf"] = (
-        df_anagrafica["ticker"] + "." + df_anagrafica["exchange"]
+    # filter out tickers that start with ^
+    df_anagrafica = df_anagrafica[~df_anagrafica["ticker"].str.startswith("^")]
+    # add the exchange to the ticker to match the yfinance format if exchange is not empty
+    df_anagrafica["exchange"] = df_anagrafica["exchange"].fillna("")
+    df_anagrafica["ticker_yf"] = df_anagrafica.apply(
+        lambda x: x["ticker"] + "." + x["exchange"] if x["exchange"] != '' else x["ticker"],
+        axis=1,
     )
 
     # Drop columns not belonging to the excel tables
     df_storico = df_storico.drop(
         columns=[col_ for col_ in df_storico.columns if col_.startswith("Unnamed")]
     )
-
+    df_storico.to_excel("df_storico.xlsx", index=False)
+    df_anagrafica.to_excel("df_anagrafica.xlsx", index=False)
     write_load_message(df_data=df_storico, df_dimensions=df_anagrafica)
     return df_storico, df_anagrafica
 
 
-@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+
 def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
     df_last_closing = pd.DataFrame(
         columns=["ticker_yf", "last_closing_date", "price"],
         index=range(len(ticker_list)),
     )
     for i, ticker_ in zip(range(len(ticker_list)), ticker_list):
-        ticker_data = yf.Ticker(ticker_)
+        print(f"Processing {ticker_}")
+        ticker_data = (
+            yf.Ticker(ticker_)
+        )
         try:
             closing_date_ = (
                 ticker_data.history(
@@ -117,13 +134,25 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
             df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
         except:
             try:
-                closing_date_ = get_last_closing_price_from_api(ticker=ticker_)
-                df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
-            except:
-                st.error(
-                    f"{ticker_}: latest data not available. Please check your internet connection or try again later",
-                    icon="😔",
+                closing_date_ = (
+                    ticker_data.history(
+                        period="1mo",
+                        interval="1d",
+                    )["Close"]
+                    .reset_index()
+                    .values.tolist()
                 )
+                df_last_closing.iloc[i] = [ticker_] + closing_date_[-1]
+            except:
+                try:
+                    closing_date_ = get_last_closing_price_from_api(ticker=ticker_)
+                    df_last_closing.iloc[i] = [ticker_] + closing_date_[0]
+                except:
+                    print(f'Error in {ticker_}')
+                    st.error(
+                        f"{ticker_}: latest data not available. Please check your internet connection or try again later",
+                        icon="😔",
+                    )
 
     df_last_closing["last_closing_date"] = (
         df_last_closing["last_closing_date"].astype(str).str.slice(0, 10)
@@ -132,7 +161,7 @@ def get_last_closing_price(ticker_list: List[str]) -> pd.DataFrame:
     return df_last_closing
 
 
-@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+
 def get_last_closing_price_from_api(ticker: str, days_of_delay: int = 5) -> List:
     today = datetime.utcnow()
     delayed = today - timedelta(days=days_of_delay)
@@ -140,21 +169,27 @@ def get_last_closing_price_from_api(ticker: str, days_of_delay: int = 5) -> List
     period1 = int(delayed.timestamp())
     period2 = int(datetime.utcnow().timestamp())
 
-    link = f"https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval=1d&events=history&includeAdjustedClose=true"
-
+    
     try:
+        link = f"https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval=1d&events=history&includeAdjustedClose=true"
         closing_date = pd.read_csv(link, usecols=["Date", "Adj Close"]).rename(
             {"Adj Close": "Close"}
         )
         closing_date["Date"] = pd.to_datetime(closing_date["Date"])
         closing_date = closing_date.head(1).values.tolist()
     except:
-        closing_date = None
+        try:
+            link = f"https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval=1mo&events=history&includeAdjustedClose=true"
+            closing_date = pd.read_csv(link, usecols=["Date", "Close"])
+            closing_date["Date"] = pd.to_datetime(closing_date["Date"])
+            closing_date = closing_date.head(1).values.tolist()
+        except:
+            closing_date = None
 
     return closing_date
 
 
-@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+
 def get_full_price_history(ticker_list: List[str]) -> Dict:
     df_history = dict()
 
@@ -172,7 +207,7 @@ def get_full_price_history(ticker_list: List[str]) -> Dict:
     return df_history
 
 
-@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+
 def get_max_common_history(ticker_list: List[str]) -> pd.DataFrame:
     full_history = get_full_price_history(ticker_list)
     df_full_history = pd.concat(
@@ -180,7 +215,8 @@ def get_max_common_history(ticker_list: List[str]) -> pd.DataFrame:
         axis=1,
     )
     first_idx = df_full_history.apply(pd.Series.first_valid_index).max()
-    return df_full_history.loc[first_idx:]
+    last_idx = df_full_history.apply(pd.Series.last_valid_index).min()
+    return df_full_history.loc[first_idx:last_idx]
 
 
 @st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
@@ -216,3 +252,67 @@ def get_risk_free_rate_history(decimal: bool = False) -> pd.DataFrame:
     if decimal:
         df_ecb["euro_str"] = df_ecb["euro_str"].div(100)
     return df_ecb
+
+
+def get_summary(df_storico, df_anagrafica):
+    # df_storico contains the historical transactions
+    # df_anagrafica contains the asset information
+
+    # compute # of shares for each asset
+    number_of_shares = df_storico.groupby("ticker_yf")["shares"].sum()
+    df_anagrafica = df_anagrafica.merge(number_of_shares, left_on="ticker_yf", right_index=True, how="left")
+
+    # compute avg shares cost for each asset weighted by the number of shares
+    avg_weighted_cost = (
+        df_storico.groupby("ticker_yf")["ap_amount"].sum() / df_storico.groupby("ticker_yf")["shares"].sum()
+    ).to_frame("avg_shares_cost")
+    df_anagrafica = df_anagrafica.merge(avg_weighted_cost, left_on="ticker_yf", right_index=True, how="left")
+
+    # compute current price for each asset
+    last_closing_price = get_last_closing_price(df_anagrafica["ticker_yf"].to_list())
+    last_closing_price.rename(columns={"price": "last_closing_price"}, inplace=True)
+    df_anagrafica = df_anagrafica.merge(last_closing_price, left_on="ticker_yf", right_on="ticker_yf", how="left")
+
+    # compute total cost for each asset
+    total_cost = df_storico.groupby("ticker_yf")["ap_amount"].sum().to_frame("total_cost")
+    df_anagrafica = df_anagrafica.merge(total_cost, left_on="ticker_yf", right_index=True, how="left")
+
+    # compute current value for each asset
+    print(df_anagrafica)
+    df_anagrafica["current_value"] = df_anagrafica["shares"] * df_anagrafica["last_closing_price"]
+
+    # compute total gain/loss for each asset
+    df_anagrafica["gain_loss"] = df_anagrafica["current_value"] - df_anagrafica["total_cost"]
+
+    # compute total gain/loss percentage for each asset
+    df_anagrafica["gain_loss_perc"] = df_anagrafica["gain_loss"] / df_anagrafica["total_cost"]
+
+    print(df_anagrafica)
+    df_anagrafica = df_anagrafica[[
+        "ticker_yf",
+        "name",
+        "shares",
+        "avg_shares_cost",
+        "total_cost",
+        "last_closing_price",
+        "current_value",
+        "gain_loss",
+        "gain_loss_perc",
+    ]]
+
+    # Compute a total row for each column
+    total_series = [
+        "",
+        "Total",
+        df_anagrafica["shares"].sum(),
+        df_anagrafica["avg_shares_cost"].mean(),
+        df_anagrafica["total_cost"].sum(),
+        df_anagrafica["last_closing_price"].mean(),
+        df_anagrafica["current_value"].sum(),
+        df_anagrafica["gain_loss"].sum(),
+        df_anagrafica["gain_loss"].sum() / df_anagrafica["total_cost"].sum(),
+    ]
+    df_anagrafica.loc["Total"] = total_series
+
+    return df_anagrafica
+    

@@ -83,7 +83,6 @@ if uploaded_file is not None:
 with open(DATA_PATH / Path("template.xlsx"), "rb") as f:
     col_l.download_button(
         "Download Template",
-        icon="📑",
         data=f,
         file_name="template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -97,7 +96,6 @@ st.markdown(
 
 if st.button(
     label="Load Mock Data",
-    icon="📊",
     key="load_mock_df",
     help="Load data to start a demo",
 ):

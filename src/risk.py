@@ -6,27 +6,198 @@ import numpy as np
 
 from var import CACHE_EXPIRE_SECONDS, TRADING_DAYS_YEAR
 
+import pandas as pd
+import numpy as np
 
-@st.cache_data(ttl=10 * CACHE_EXPIRE_SECONDS, show_spinner=False)
-def sharpe_ratio(
-    returns: pd.Series, trading_days: int, risk_free_rate: float = 3
-) -> float:
-    mean = returns.mean() * trading_days - risk_free_rate
-    std = returns.std() * np.sqrt(trading_days)
-    return mean / std
+# 1. Sharpe Ratio
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 3, trading_days: int = 252) -> float:
+    mean_return = returns.mean() * trading_days
+    std_dev = returns.std() * np.sqrt(trading_days)
+    return (mean_return - risk_free_rate) / std_dev if std_dev != 0 else np.nan
+
+# 2. Sortino Ratio
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def sortino_ratio(returns: pd.Series, risk_free_rate: float = 3, trading_days: int = 252) -> float:
+    downside = returns[returns < 0].std() * np.sqrt(trading_days)
+    mean_return = returns.mean() * trading_days
+    return (mean_return - risk_free_rate) / downside if downside != 0 else np.nan
+
+# 3. Calmar Ratio
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def calmar_ratio(returns: pd.Series, trading_days: int = 252) -> float:
+    annualized_return = returns.mean() * trading_days
+    max_dd = get_max_dd(returns)
+    return annualized_return / abs(max_dd) if max_dd != 0 else np.nan
+
+# 4. Max Drawdown
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def get_max_dd(returns: pd.Series) -> float:
+    cumulative = (1 + returns).cumprod()
+    drawdown = cumulative / cumulative.cummax() - 1
+    return drawdown.min()
+
+# 5. Volatility
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def volatility(returns: pd.Series, trading_days: int = 252) -> float:
+    return returns.std() * np.sqrt(trading_days)
+
+# 6. Annualized Return
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def annualized_return(returns: pd.Series, trading_days: int = 252) -> float:
+    return returns.mean() * trading_days
+
+# 7. Downside Deviation
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def downside_deviation(returns: pd.Series, trading_days: int = 252) -> float:
+    downside = returns[returns < 0]
+    return downside.std() * np.sqrt(trading_days)
+
+# 13. Pain Index
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def pain_index(returns: pd.Series, trading_days: int = 252) -> float:
+    downside = returns[returns < 0]
+    return downside.sum() / trading_days
+
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def compute_metrics(
+    df_returns: pd.DataFrame, 
+    risk_free_rate: float = 4.5, 
+    trading_days: int = 252
+) -> pd.DataFrame:
+    metrics = {}
+
+    daily_risk_free_rate = risk_free_rate / 100 / trading_days
+
+    df_returns.to_excel('df_returns.xlsx')
+    for col in df_returns.columns:
+        print(col)
+        returns = df_returns[col]
+        metrics[col] = {
+            "Sharpe Ratio": sharpe_ratio(returns, daily_risk_free_rate, trading_days),
+            "Sortino Ratio": sortino_ratio(returns, daily_risk_free_rate, trading_days),
+            "Volatility": volatility(returns, trading_days),
+            "Max Drawdown": get_max_dd(returns),
+            "Calmar Ratio": calmar_ratio(returns, trading_days),
+            "Annualized Return": annualized_return(returns, trading_days),
+            "Downside Deviation": downside_deviation(returns, trading_days),
+            "Pain Index": pain_index(returns, trading_days),
+        }
+
+    return pd.DataFrame(metrics).T
 
 
-# def sortino_ratio(series, N, rf):
-#     mean = series.mean() * N -rf
-#     std_neg = series[series<0].std()*np.sqrt(N)
-#     return mean/std_neg
+# 1. Sharpe Ratio (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_sharpe_ratio(returns: pd.Series, risk_free_rate: float = 3, trading_days: int = 252, window: int = 21) -> pd.Series:
+    """Calculate rolling Sharpe ratio."""
+    excess_returns = returns - (risk_free_rate / 100 / trading_days)
+    rolling_mean = excess_returns.rolling(window).mean() * trading_days
+    rolling_std = returns.rolling(window).std() * np.sqrt(trading_days)
+    return rolling_mean / rolling_std
 
-# def max_drawdown(return_series):
-#     comp_ret = (return_series+1).cumprod()
-#     peak = comp_ret.expanding(min_periods=1).max()
-#     dd = (comp_ret/peak)-1
-#     return dd.min()
 
+# 2. Sortino Ratio (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_sortino_ratio(returns: pd.Series, risk_free_rate: float = 3, trading_days: int = 252, window: int = 21) -> pd.Series:
+    """Calculate rolling Sortino ratio."""
+    downside = returns[returns < 0]
+    downside_rolling_std = downside.rolling(window).std() * np.sqrt(trading_days)
+    rolling_mean = returns.rolling(window).mean() * trading_days
+    return (rolling_mean - risk_free_rate / 100) / downside_rolling_std
+
+
+# 3. Calmar Ratio (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_calmar_ratio(returns: pd.Series, trading_days: int = 252, window: int = 21) -> pd.Series:
+    """Calculate rolling Calmar ratio."""
+    rolling_return = returns.rolling(window).mean() * trading_days
+    rolling_max_dd = returns.rolling(window).apply(get_max_dd)
+    return rolling_return / abs(rolling_max_dd)
+
+
+# 4. Max Drawdown (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_get_max_dd(returns: pd.Series) -> float:
+    cumulative = (1 + returns).cumprod()
+    drawdown = cumulative / cumulative.cummax() - 1
+    return drawdown.min()
+
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_max_drawdown_rolling(returns: pd.Series, window: int = 21) -> pd.Series:
+    """Calculate rolling Max Drawdown."""
+    return returns.rolling(window).apply(get_max_dd)
+
+
+# 5. Volatility (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_volatility(returns: pd.Series, trading_days: int = 252, window: int = 21) -> pd.Series:
+    """Calculate rolling volatility."""
+    return returns.rolling(window).std() * np.sqrt(trading_days)
+
+
+# 6. Annualized Return (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_annualized_return(returns: pd.Series, trading_days: int = 252, window: int = 21) -> pd.Series:
+    """Calculate rolling annualized return."""
+    return returns.rolling(window).mean() * trading_days
+
+
+# 7. Downside Deviation (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_downside_deviation(returns: pd.Series, trading_days: int = 252, window: int = 21) -> pd.Series:
+    """Calculate rolling downside deviation."""
+    downside = returns[returns < 0]
+    return downside.rolling(window).std() * np.sqrt(trading_days)
+
+# 8. Pain Index (Rolling)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def rolling_pain_index(returns: pd.Series, trading_days: int = 252, window: int = 21) -> pd.Series:
+    """Calculate rolling pain index."""
+    downside = returns[returns < 0]
+    return downside.rolling(window).sum() / trading_days
+
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def compute_rolling_metrics(
+    df_returns: pd.DataFrame, 
+    risk_free_rate: float = 3, 
+    trading_days: int = 252,
+    window: int = 21  # Rolling window in terms of days
+) -> pd.DataFrame:
+    """Compute rolling metrics for each asset in the DataFrame."""
+    metrics = {}
+
+    for col in df_returns.columns:
+        returns = df_returns[col]
+        metrics[col] = {
+            "Sharpe Ratio": rolling_sharpe_ratio(returns, risk_free_rate, trading_days, window),
+            "Sortino Ratio": rolling_sortino_ratio(returns, risk_free_rate, trading_days, window),
+            "Volatility": rolling_volatility(returns, trading_days, window),
+            "Max Drawdown": rolling_max_drawdown_rolling(returns, window),
+            "Calmar Ratio": rolling_calmar_ratio(returns, trading_days, window),
+            "Annualized Return": rolling_annualized_return(returns, trading_days, window),
+            "Downside Deviation": rolling_downside_deviation(returns, trading_days, window),
+            "Pain Index": rolling_pain_index(returns, trading_days, window),
+        }
+
+    reshaped_metrics = []
+    # Iterate over the dictionary to reshape data
+    for asset, metric_values in metrics.items():
+        for metric, values in metric_values.items():
+            for date_index, value in enumerate(values):
+                reshaped_metrics.append({
+                    'Asset': asset,
+                    'Date': date_index,  # Assuming date as index (0, 1, ...)
+                    'Metric': metric,
+                    'Value': value
+                })
+
+    df = pd.DataFrame(reshaped_metrics)
+    # Pivot to required format: index as (Asset, Date), columns as Metric, values as Value
+    df_pivoted = df.pivot(index=['Asset', 'Date'], columns='Metric', values='Value').reset_index()
+    df_pivoted.to_excel('df_metrics_pivoted.xlsx')
+
+    return df_pivoted
 
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def get_drawdown(df: pd.DataFrame) -> pd.DataFrame:
@@ -63,7 +234,7 @@ def get_portfolio_relative_risk_contribution(
     df_registry: pd.DataFrame,
     level: Literal["ticker", "asset_class", "macro_asset_class"],
 ) -> pd.DataFrame:
-    df_log_rets = np.log(df_prices.div(df_prices.shift()))
+    df_log_rets = np.log(df_prices.div(df_prices.shift())).fillna(0)
     if level == "ticker":
         # Log-returns
         df_rets = df_log_rets

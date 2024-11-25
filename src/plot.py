@@ -235,3 +235,33 @@ def plot_horizontal_bar(
         hoverlabel_font_size=PLT_FONT_SIZE,
     )
     return fig
+
+
+def plot_sector_allocation(df: pd.DataFrame) -> go.Figure:
+    fig = px.sunburst(
+        data_frame=df,
+        path=["sector"],
+        values="weight_pf",
+    )
+    fig.update_traces(hovertemplate="<b>%{value:.1f}%")
+    fig.update_layout(
+        autosize=False,
+        height=620,
+        margin=dict(l=0, r=0, t=20, b=20),
+        hoverlabel_font_size=PLT_FONT_SIZE,
+    )
+    return fig
+
+def plot_risk_metrics_over_time(df: pd.DataFrame):
+    # plot a line chart with the risk metrics over time
+    fig = px.line(df, x=df.index, y=df.columns)
+    fig.update_layout(
+        autosize=False,
+        height=600,
+        margin=dict(l=0, r=0, t=20, b=0),
+        legend=dict(title=""),
+        yaxis=dict(title="Value", showgrid=False, tickformat=".1%"),
+        xaxis=dict(title=""),
+        hoverlabel_font_size=PLT_FONT_SIZE,
+    )
+    return fig

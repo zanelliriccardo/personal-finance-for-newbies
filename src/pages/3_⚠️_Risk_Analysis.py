@@ -1,9 +1,10 @@
 import streamlit as st
 
 from input_output import write_disclaimer, get_max_common_history
-from risk import get_drawdown, get_max_dd, get_portfolio_relative_risk_contribution
+from risk import get_drawdown, get_max_dd, get_portfolio_relative_risk_contribution, compute_metrics, compute_rolling_metrics
 from returns import get_period_returns
-from plot import plot_drawdown, plot_horizontal_bar
+from plot import plot_drawdown, plot_horizontal_bar, plot_risk_metrics_over_time
+import pandas as pd
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -35,6 +36,7 @@ df_n_shares = (
     .sort_values("n_shares", ascending=False)
 )
 ticker_list = df_n_shares.loc[~(df_n_shares == 0).all(axis=1)].index.unique().to_list()
+
 df_common_history = get_max_common_history(ticker_list=ticker_list)
 
 st.markdown("## Global settings")
@@ -184,20 +186,51 @@ fig = plot_horizontal_bar(
 )
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
 
+
+st.markdown("## Last year risk metrics")
+df_rets = get_period_returns(
+    df=df_common_history.loc[first_day:last_day, :],
+    df_registry=df_registry,
+    tickers_to_evaluate=ticker_list,
+    period=DICT_FREQ_RESAMPLE["Day"],
+    level=DICT_GROUPBY_LEVELS[level],
+)
+# take last year
+df_rets = df_rets.iloc[-252:]
+metrics_df = compute_metrics(df_returns=df_rets, trading_days=len(df_rets))
+
+metrics_df.to_excel("metrics.xlsx")
+st.dataframe(metrics_df.style.format("{:.4f}"))
+
+st.markdown("***")
+
+#st.markdown("## Risk metrics over time")
+
+#window = st.slider(
+#    "Choose a rolling window:",
+#    min_value=1,
+#    max_value=df_common_history.loc[first_day:last_day, :].shape[0] - 2,
+#    value=30,
+#)
+
+#cols = st.multiselect(
+#    f"Choose the assets to display:",
+#    options=df_rets.columns.to_list(),
+#    default=df_rets.columns.to_list()[0],
+#    key="sel_lev_2",
+#)
+
+#rolling_metrics_df = compute_rolling_metrics(
+#    df_returns=df_rets[cols],
+#    trading_days=len(df_rets), 
+#    window=window
+#)
+
+#fig = plot_risk_metrics_over_time(df=rolling_metrics_df)
+
+#st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG_NO_LOGO)
+
+
+
+
 write_disclaimer()
-
-# returns = np.log(weighted_average.div(weighted_average.shift(1))).fillna(0)
-
-# first_ap_day = str(df_storico["transaction_date"].min())[:10]
-
-# sr = sharpe_ratio(
-#     returns=returns,
-#     trading_days=df_common_history.shape[0],
-#     risk_free_rate=get_risk_free_rate_history(decimal=True)
-#     .sort_index()
-#     .loc[first_ap_day:]
-#     .median()
-#     .values[0],
-# )
-
-# st.write(sr)
