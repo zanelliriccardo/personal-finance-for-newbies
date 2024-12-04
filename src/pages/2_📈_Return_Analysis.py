@@ -1,8 +1,8 @@
 import streamlit as st
 
 from input_output import write_disclaimer, get_max_common_history
-from returns import get_period_returns, get_rolling_returns
-from plot import plot_correlation_map, plot_returns, plot_rolling_returns
+from returns import get_period_returns, get_rolling_returns, correlation_analysis
+from plot import plot_correlation_map, plot_returns, plot_rolling_returns, plot_correlation
 from var import (
     GLOBAL_STREAMLIT_STYLE,
     PLT_CONFIG_NO_LOGO,
@@ -159,5 +159,7 @@ df_roll_ret = get_rolling_returns(
 fig = plot_rolling_returns(df_roll_ret, window)
 st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
 # TODO add start and end period in hover
+
+
 
 write_disclaimer()

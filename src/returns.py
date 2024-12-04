@@ -1,8 +1,10 @@
 from typing import Literal
+import itertools as it
 
 import streamlit as st
 import pandas as pd
 import numpy as np
+
 
 from var import CACHE_EXPIRE_SECONDS
 
@@ -79,3 +81,11 @@ def get_rolling_returns(
 
             df_roll_ret_classes[class_] = df_roll_ret[cols_to_sum].sum(axis=1)
         return df_roll_ret_classes
+
+
+def correlation_analysis(df, lookback_window):
+    etfs_pairs = list(it.combinations(df.columns, 2))
+    correlation = pd.DataFrame()
+    for pair in etfs_pairs:
+        correlation[str(pair[0])+' <--> '+str(pair[1])] = df[list(pair)].rolling(lookback_window).corr().iloc[0::2,-1].droplevel(1, axis=0)
+    return correlation

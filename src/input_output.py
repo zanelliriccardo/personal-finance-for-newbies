@@ -90,12 +90,13 @@ def load_data(full_path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
             "Security Name": "name",
             "Asset Class": "asset_class",
             "Macro Asset Class": "macro_asset_class",
+            "Sector_url": "sector_url",
         }
     )
     # filter out tickers that start with ^
     df_anagrafica = df_anagrafica[~df_anagrafica["ticker"].str.startswith("^")]
     # add the exchange to the ticker to match the yfinance format if exchange is not empty
-    df_anagrafica["exchange"] = df_anagrafica["exchange"].fillna("")
+    df_anagrafica = df_anagrafica.fillna("")
     df_anagrafica["ticker_yf"] = df_anagrafica.apply(
         lambda x: x["ticker"] + "." + x["exchange"] if x["exchange"] != '' else x["ticker"],
         axis=1,
@@ -316,3 +317,31 @@ def get_summary(df_storico, df_anagrafica):
 
     return df_anagrafica
     
+
+# Future projections setup with Plotly
+def simulate_future_growth(initial_wealth, annualised_return, inflation, monthly_investment, years, increase_investment):
+    # Calculate the number of months
+    months = years * 12
+    future_wealth = []
+    wealth_without_investment = []
+    annualised_return_adjusted = annualised_return - inflation
+
+    for month in range(months):
+        # Calculate the future wealth with investment each month with annualised return adjusted for inflation
+        current_wealth = initial_wealth if month == 0 else future_wealth[-1]
+        future_wealth.append(
+            current_wealth * (1 + annualised_return_adjusted / 12) + monthly_investment
+        )
+
+        # Calculate the future wealth without investment each month with inflation
+        current_wealth_without_investment = initial_wealth if month == 0 else wealth_without_investment[-1]
+        wealth_without_investment.append(
+            current_wealth_without_investment * (1 - inflation / 12) + monthly_investment
+        )
+        
+        # Increase the monthly investment every 5 years (60 months)
+        increase_interval_years = 5
+        if (month + 1) % (increase_interval_years * 12) == 0 and month > 0:
+            monthly_investment *= (1 + increase_investment)
+
+    return future_wealth, wealth_without_investment

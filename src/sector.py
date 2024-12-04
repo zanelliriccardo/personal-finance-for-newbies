@@ -5,25 +5,21 @@ import pandas as pd
 
 
 def retrieve_sector(df_anagrafica: pd.DataFrame) -> pd.DataFrame:
-    # retrieve page
-    df_anagrafica["page_content"] = df_anagrafica["page_url"].apply(retrieve_page)
-
+    # filter only specified url
+    df_anagrafica = df_anagrafica[df_anagrafica["sector_url"] != '']
     # filter only Equity
     df_anagrafica = df_anagrafica[df_anagrafica["macro_asset_class"] == "Equity"]
 
+    # retrieve page
+    df_anagrafica["page_content"] = df_anagrafica["sector_url"].apply(retrieve_page)
+
     # based on macro asset class trigger the right function. Use switch case
-    df_anagrafica["sector_data"] = (
+    df_sector = pd.concat([
         df_anagrafica.apply(
             lambda x: retrieve_etf_sector_data(x) if x["macro_asset_class"] == "Equity" else None,
             axis=1,
         )
-    )
-
-    # build a dataframe with the sector data
-    df_sector = pd.DataFrame(
-        df_anagrafica["sector_data"].apply(pd.Series).stack().reset_index(level=1, drop=True),
-        columns=["sector_weight"],
-    )
+    ])
 
     return df_sector
 
@@ -55,8 +51,9 @@ def retrieve_etf_sector_data(etf_anagrafica: pd.Series) -> pd.Series:
             allocation = content_div.find("span", class_="data").text.strip()
             sector_data[sector_name] = allocation
 
-    # add the sector data to the etf_anagrafica Series
-    etf_anagrafica["sector_data"] = sector_data
+    sector_data = pd.Series(sector_data)
+    asset_name = pd.Series(etf_anagrafica["ticker_yf"], index=["ticker_yf"])
 
-    return etf_anagrafica
+    sector_data = pd.concat([asset_name, sector_data])
+    return sector_data
 

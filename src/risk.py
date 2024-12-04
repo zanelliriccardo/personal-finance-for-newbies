@@ -3,6 +3,7 @@ from typing import Literal
 import streamlit as st
 import pandas as pd
 import numpy as np
+import yfinance as yf
 
 from var import CACHE_EXPIRE_SECONDS, TRADING_DAYS_YEAR
 
@@ -53,16 +54,27 @@ def downside_deviation(returns: pd.Series, trading_days: int = 252) -> float:
     downside = returns[returns < 0]
     return downside.std() * np.sqrt(trading_days)
 
-# 13. Pain Index
+# 8. Pain Index
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def pain_index(returns: pd.Series, trading_days: int = 252) -> float:
     downside = returns[returns < 0]
     return downside.sum() / trading_days
 
+# 9. Value at Risk (VaR)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def value_at_risk(returns: pd.Series, confidence_level: float = 0.05) -> float:
+    return np.percentile(returns, 100 * confidence_level)
+
+# 10. Conditional Value at Risk (CVaR)
+@st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
+def conditional_value_at_risk(returns: pd.Series, confidence_level: float = 0.05) -> float:
+    var = value_at_risk(returns, confidence_level)
+    return returns[returns <= var].mean()
+
 @st.cache_data(ttl=CACHE_EXPIRE_SECONDS, show_spinner=False)
 def compute_metrics(
     df_returns: pd.DataFrame, 
-    risk_free_rate: float = 4.5, 
+    risk_free_rate: float = yf.Ticker("^IRX").history(period="1y").Close.mean(),
     trading_days: int = 252
 ) -> pd.DataFrame:
     metrics = {}
@@ -71,17 +83,18 @@ def compute_metrics(
 
     df_returns.to_excel('df_returns.xlsx')
     for col in df_returns.columns:
-        print(col)
         returns = df_returns[col]
         metrics[col] = {
             "Sharpe Ratio": sharpe_ratio(returns, daily_risk_free_rate, trading_days),
             "Sortino Ratio": sortino_ratio(returns, daily_risk_free_rate, trading_days),
             "Volatility": volatility(returns, trading_days),
-            "Max Drawdown": get_max_dd(returns),
+            "Max Drawdown %": get_max_dd(returns) * 100,
             "Calmar Ratio": calmar_ratio(returns, trading_days),
-            "Annualized Return": annualized_return(returns, trading_days),
+            "Annualized Return %": annualized_return(returns, trading_days) * 100,
             "Downside Deviation": downside_deviation(returns, trading_days),
             "Pain Index": pain_index(returns, trading_days),
+            "Value at Risk (VaR)": value_at_risk(returns, confidence_level=0.05) * 100,
+            "Conditional VaR (CVaR)": conditional_value_at_risk(returns, confidence_level=0.05) * 100,
         }
 
     return pd.DataFrame(metrics).T

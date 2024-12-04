@@ -9,15 +9,16 @@ from var import (
     FAVICON,
     DICT_GROUPBY_LEVELS,
 )
-from input_output import write_disclaimer, get_last_closing_price, get_summary
+from input_output import write_disclaimer, get_last_closing_price, get_summary, simulate_future_growth
 from aggregation import (
     aggregate_by_ticker,
     get_pnl_by_asset_class,
     get_portfolio_pivot,
     get_wealth_history,
 )
-from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class, plot_sector_allocation
+from plot import plot_sunburst, plot_wealth, plot_pnl_by_asset_class, plot_sector_allocation, plot_correlation, plot_projection
 from sector import retrieve_sector
+from returns import correlation_analysis
 
 st.set_page_config(
     page_title="PFN | Asset Allocation & PnL",
@@ -209,12 +210,57 @@ st.markdown("***")
 
 st.markdown("## Sector allocation for equities")
 
-#df_sector = retrieve_sector(df_anagrafica)
-#df_sector = df_sector[df_sector["macro_asset_class"] == "Equity"]
-#
+df_sector = retrieve_sector(df_anagrafica)
 
-#fig = plot_sector_allocation(df_sector)
-#st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+fig = plot_sector_allocation(df_sector, df_pivot)
+st.plotly_chart(fig, use_container_width=True, config=PLT_CONFIG)
+
+
+st.markdown("***")
+
+st.markdown('## Simulation of future growth')
+
+# Main page layout with two columns for inputs
+col1, col2 = st.columns(2)
+
+# Collecting inputs for future projections
+with col1:
+    years = st.slider("Years to project", min_value=1, max_value=30, value=10, step=1)
+    annualised_return = st.number_input("Annualized Return (%)", value=5.0) / 100
+    inflation = st.number_input("Annualized Inflation (%)", value=2.0) / 100
+
+with col2:
+    monthly_investment = st.slider("Monthly Investment (€)", min_value=0, max_value=2000, value=500, step=50)
+    increase_investment = st.slider("Increase in Monthly Investment (%) every 5 years", min_value=0.0, max_value=10.0, value=5.0) / 100
+
+# Starting wealth based on portfolio value from previous calculations
+initial_wealth = pf_actual_value  # assuming pf_actual_value is your starting wealth
+
+# Simulate future growth
+future_wealth, wealth_without_investment = simulate_future_growth(
+    initial_wealth, annualised_return, inflation, monthly_investment, years, increase_investment
+)
+
+fig = plot_projection(years, future_wealth, wealth_without_investment)
+
+st.plotly_chart(fig)
+
+# Show summary of future projections
+st.markdown(f"### Projection Summary: overall return {future_wealth[-1] / wealth_without_investment[-1] - 1:.2%} over non-investment scenario")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(f"- **Initial Wealth**: €{initial_wealth:,.2f}")
+    st.markdown(f"- **Annualized Return**: {annualised_return * 100:.2f}%")
+    st.markdown(f"- **Annualized Inflation**: {inflation * 100:.2f}%")
+    st.markdown(f"- **Final Wealth**: €{future_wealth[-1]:,.2f}")
+
+with col2:
+    st.markdown(f"- **Monthly Investment**: €{monthly_investment:.2f}")
+    st.markdown(f"- **Increase in Monthly Investment**: {increase_investment * 100:.2f}% every 5 years")
+    st.markdown(f"- **Years to Project**: {years}")
+    st.markdown(f"- **Wealth without Investment**: €{wealth_without_investment[-1]:,.2f}")
 
 
 write_disclaimer()

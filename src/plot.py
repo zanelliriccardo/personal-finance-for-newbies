@@ -4,6 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from var import PLT_FONT_SIZE
 
@@ -237,18 +239,42 @@ def plot_horizontal_bar(
     return fig
 
 
-def plot_sector_allocation(df: pd.DataFrame) -> go.Figure:
-    fig = px.sunburst(
-        data_frame=df,
-        path=["sector"],
-        values="weight_pf",
+def plot_sector_allocation(df_sector: pd.DataFrame, df_pivot: pd.DataFrame) -> go.Figure:
+    # Convert percentages in df_sector to numeric values
+    df_sector = df_sector.set_index('ticker_yf').applymap(lambda x: float(x.strip('%')) / 100)
+    # Reshape df_sector to long format
+    sector_data = df_sector.reset_index().melt(
+        id_vars='ticker_yf',
+        var_name='sector',
+        value_name='sector_weight'
     )
-    fig.update_traces(hovertemplate="<b>%{value:.1f}%")
+    
+    # Merge sector data with asset weights from df_pivot
+    df_pivot['weight_pf'] = df_pivot['weight_pf'] / 100  # Convert to decimal
+    merged = pd.merge(
+        sector_data,
+        df_pivot[['ticker_yf', 'name', 'macro_asset_class', 'asset_class', 'weight_pf']],
+        left_on='ticker_yf',
+        right_on='ticker_yf',
+        how='left'
+    )
+
+    # Calculate the sector weight in the portfolio
+    merged['sector_weight'] = merged['sector_weight'] * merged['weight_pf']
+    
+    # Create the sunburst chart
+    fig = px.sunburst(
+        data_frame=merged,
+        path=["macro_asset_class", "asset_class", "sector"],
+        values="sector_weight",
+        color="sector",
+    )
+    fig.update_traces(hovertemplate="<b>%{label}:</b> %{value:.1%}")
     fig.update_layout(
         autosize=False,
         height=620,
         margin=dict(l=0, r=0, t=20, b=20),
-        hoverlabel_font_size=PLT_FONT_SIZE,
+        hoverlabel_font_size=12,
     )
     return fig
 
@@ -264,4 +290,44 @@ def plot_risk_metrics_over_time(df: pd.DataFrame):
         xaxis=dict(title=""),
         hoverlabel_font_size=PLT_FONT_SIZE,
     )
+    return fig
+
+def plot_correlation(rolling_corrs: pd.DataFrame):
+    fig, ax = plt.subplots(1,1, figsize=(28,5))
+    return sns.heatmap(rolling_corrs.transpose())
+
+def plot_projection(years: int, future_wealth: np.ndarray, wealth_without_investment: np.ndarray):
+
+    # Plot the results using Plotly
+    months_range = np.arange(1, years * 12 + 1)
+
+    fig = go.Figure()
+
+    # Future wealth with monthly investment
+    fig.add_trace(go.Scatter(
+        x=months_range,
+        y=future_wealth,
+        mode='lines',
+        name="Wealth with Investment",
+        line=dict(color='green', width=2)
+    ))
+
+    # Wealth without investment (only growth)
+    fig.add_trace(go.Scatter(
+        x=months_range,
+        y=wealth_without_investment,
+        mode='lines',
+        name="Wealth without Investment",
+        line=dict(color='red', dash='dash', width=2)
+    ))
+
+    # Formatting the plot
+    fig.update_layout(
+        title=f"Projected Portfolio Growth for {years} Years",
+        xaxis_title="Months",
+        yaxis_title="Portfolio Value (€)",
+        template="plotly",
+        legend_title="Portfolio Scenarios"
+    )
+
     return fig
